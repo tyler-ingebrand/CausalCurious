@@ -58,7 +58,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
     """
 
     policy_aliases: Dict[str, Type[BasePolicy]] = {
-        "MlCausalCuriousPPOlicy": ActorCriticPolicy,
+        "MlpPolicy": ActorCriticPolicy,
         "CnnPolicy": ActorCriticCnnPolicy,
         "MultiInputPolicy": MultiInputActorCriticPolicy,
     }
@@ -67,9 +67,9 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self,
         policy: Union[str, Type[ActorCriticPolicy]],
         env: Union[GymEnv, str],
+        episode_length:int,
+        episodes_per_update:int,
         learning_rate: Union[float, Schedule] = 3e-4,
-        n_steps: int = 2048,
-        batch_size: int = 64,
         n_epochs: int = 10,
         gamma: float = 0.99,
         gae_lambda: float = 0.95,
@@ -89,7 +89,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
     ):
-
+        n_steps = episode_length * episodes_per_update
+        batch_size = int(n_steps / 100)
         super().__init__(
             policy,
             env,
@@ -108,7 +109,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
             device=device,
             seed=seed,
             _init_setup_model=False,
-            suCausalCuriousPPOrted_action_spaces=(
+            supported_action_spaces=(
                 spaces.Box,
                 spaces.Discrete,
                 spaces.MultiDiscrete,
@@ -165,6 +166,12 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
     def generate_synthetic_reward(self) -> None:
 
         # TODO Generate synthetic reward here, update self.replay_buffer
+        buffer = self.rollout_buffer
+        print(sum(buffer.episode_starts), " episodes")
+        print(len(buffer.episode_starts), " steps")
+        for i in range(len(buffer.episode_starts)):
+            if buffer.episode_starts[i] != 0:
+                print(i)
         raise Exception("TODO")
         return None
 
