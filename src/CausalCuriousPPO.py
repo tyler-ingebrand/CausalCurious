@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Type, TypeVar, Union
 import numpy as np
 import torch as th
 from gym import spaces
+from stable_baselines3.common.vec_env import VecEnv
 from torch.nn import functional as F
 
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
@@ -20,11 +21,9 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
     :param env: The environment to learn from (if registered in Gym, can be str)
     :param learning_rate: The learning rate, it can be a function
         of the current progress remaining (from 1 to 0)
-    :param n_steps: The number of steps to run for each environment per update
-        (i.e. rollout buffer size is n_steps * n_envs where n_envs is number of environment copies running in parallel)
-        NOTE: n_steps * n_envs must be greater than 1 (because of the advantage normalization)
-        See https://github.com/pytorch/pytorch/issues/29372
-    :param batch_size: Minibatch size
+    :param episode_length: The length of a full episode in the env. Episodes should not be truncated.
+    :param episodes_per_update: How many episodes are needed for each update.
+        Should be a largish number so clustering can work
     :param n_epochs: Number of epoch when optimizing the surrogate loss
     :param gamma: Discount factor
     :param gae_lambda: Factor for trade-off of bias vs variance for Generalized Advantage Estimator
@@ -89,8 +88,11 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
     ):
+        n_envs = env.num_envs if isinstance(env, VecEnv) else 1
         n_steps = episode_length * episodes_per_update
-        batch_size = int(n_steps / 100)
+        batch_size = int(n_envs * n_steps / 100)
+        print("Found {} envs with episode length {} and {} episodes per update step for a total of {} steps per update.".format(n_envs, episode_length, episodes_per_update, n_steps))
+        print("Batch size set to {}".format(batch_size))
         super().__init__(
             policy,
             env,
