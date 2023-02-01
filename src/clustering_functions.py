@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from tslearn.clustering import TimeSeriesKMeans
+from tslearn.metrics import cdist_soft_dtw, soft_dtw_alignment
 
 
 def format_obs(obs, starts):
@@ -58,3 +59,36 @@ def cluster(data,
             plt.title("Example clustering usage")
             plt.show()
     return km
+
+
+def compute_distance_between_trajectory_and_cluster(traj, cluster):
+    # computes pairwise distance between all timesteps in traj and cluster
+    distances = cdist_soft_dtw(traj, cluster, gamma=1.0)
+
+    # computes allignment matrix for all pairs of points between traj and cluster.
+    # 1 = well alligned, 0 not alligned. Always between 0 and 1
+    alignment, sim = soft_dtw_alignment(traj, cluster, gamma=1.0)
+
+    # element wise multiplication. Distance depends on if it is well aligned or not.
+    result = distances * alignment
+
+    # sum distances along the trajectory. Gets distance from cluster at every timestep
+    summed_result = np.sum(result, axis=1)
+    return summed_result
+
+def get_distances_between_trajectories_and_clusters(cluster_labels, cluster_centers, data, verbose=False):
+    # compute distances between current cluster and other cluster
+    distance_to_my_cluster = np.zeros((data.shape[0], data.shape[1]))
+    distance_to_other_cluster = np.zeros((data.shape[0], data.shape[1]))
+
+    for index, traj in enumerate(data):
+        if verbose: print(index)
+        label = cluster_labels[index]
+        my_cluster = cluster_centers[label]
+        other_cluster = cluster_centers[1 - label]
+        dist_mine = compute_distance_between_trajectory_and_cluster(traj, my_cluster)
+        dist_other = compute_distance_between_trajectory_and_cluster(traj, other_cluster)
+        distance_to_my_cluster[index] = dist_mine
+        distance_to_other_cluster[index] = dist_other
+
+    return distance_to_my_cluster, distance_to_other_cluster

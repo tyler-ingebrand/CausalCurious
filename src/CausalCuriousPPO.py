@@ -12,7 +12,8 @@ from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticP
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
-from .clustering_functions import cluster, format_obs
+from .clustering_functions import cluster, format_obs, compute_distance_between_trajectory_and_cluster, \
+    get_distances_between_trajectories_and_clusters
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
@@ -185,7 +186,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         obs = buffer.observations
 
-        # reformat obs for clustering alg
+        # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
         data = format_obs(obs, self.episode_starts)
 
         # do tslearn stuff
@@ -193,23 +194,29 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         n_clusters=2,
                         distance_metric="softdtw",
                         multi_process = True,
-                        plot = True,
+                        plot = False,
                         verbose = True)
 
         # compute distances between current cluster and other cluster
-
+        distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
+                                                                                                            kmeans.cluster_centers_,
+                                                                                                            data,
+                                                                                                            verbose=True)
+        print(distance_to_my_cluster)
+        print(distance_to_other_cluster)
 
         # normalize distances
 
 
         # create reward
-
+        reward = ...
 
         # assign reward to respective timesteps
-
-        raise Exception("TODO")
-        return None
-
+        n_envs = len(buffer.rewards)
+        n_trajs_per_env = len(self.episode_starts) - 1
+        for env_number in range(n_envs):
+            synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
+            self.rollout_buffer.rewards[env_number] = synth_reward
 
     def train(self) -> None:
         """
