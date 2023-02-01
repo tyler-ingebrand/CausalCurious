@@ -73,3 +73,19 @@ def normalize_distances(ts_dists):
     min_ts_dist = np.min(ts_dists)
 
     return (ts_dists - min_ts_dist) / (max_ts_dist - min_ts_dist)
+
+
+def get_reward(norm_dist_own, norm_dist_other):
+    '''
+    Calculate reward Encouraging distance from other cluster and proximity to own cluster
+    N = num time steps
+    Inputs:
+    norm_dist_own: (numpy array, shape: num_trajectories x N) normalized time warped distance from trajectories to their own cluster centers 
+    norm_dist_other: (numpy array, shape: num_trajectories x N) normalized time warped distance from trajectories to the other cluster centers
+    '''
+
+    return norm_dist_other - norm_dist_own 
+
+
+
+
