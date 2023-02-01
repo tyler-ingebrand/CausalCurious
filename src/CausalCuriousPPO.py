@@ -12,6 +12,8 @@ from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticP
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
+from .clustering_functions import cluster
+
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
 
@@ -150,7 +152,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self.clip_range_vf = clip_range_vf
         self.normalize_advantage = normalize_advantage
         self.target_kl = target_kl
-
+        self.episode_starts = []
         if _init_setup_model:
             self._setup_model()
 
@@ -169,11 +171,37 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # TODO Generate synthetic reward here, update self.replay_buffer
         buffer = self.rollout_buffer
-        print(sum(buffer.episode_starts), " episodes")
-        print(len(buffer.episode_starts), " steps")
-        for i in range(len(buffer.episode_starts)):
-            if buffer.episode_starts[i] != 0:
-                print(i)
+
+        # find episode starts if we have not already, IE during the first update
+        if len(self.episode_starts) == 0:
+            for i in range(len(buffer.episode_starts)):
+                if (buffer.episode_starts[i] != 0).any():
+                    if not (buffer.episode_starts[i] != 0).all():
+                        raise Exception("Episodes do not have the same length, TODO Can we handle this?")
+                    self.episode_starts.append(i)
+            self.episode_starts.append(len(buffer.episode_starts)) # append the length of the buffer so we have a marker at the start and end of each episode
+            print("Episode starts: ", self.episode_starts)
+
+        # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
+        obs = buffer.observations
+
+        # break up by number of trajectories for each env
+        list_trajs = []
+        for start, end in zip(self.episode_starts[:-1], self.episode_starts[1:]):
+            list_trajs.append(obs[start:end])
+        data = np.concatenate(list_trajs, axis=1)
+
+        # transpose so tslearn is happy
+        data = np.transpose(data, (1, 0, 2))
+
+        # do tslearn stuff
+        cluster(data,
+                n_clusters=2,
+                distance_metric="softdtw",
+                multi_process = True,
+                plot = True,
+                verbose = True)
+
         raise Exception("TODO")
         return None
 
