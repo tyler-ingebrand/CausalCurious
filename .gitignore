@@ -5,6 +5,7 @@ __pycache__/
 
 # vscode stuf
 .vscode
+clustering_play.py
 
 # C extensions
 *.so
