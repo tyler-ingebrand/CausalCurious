@@ -221,6 +221,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         reshaped_reward = np.concatenate((r1, r2), axis = 1)
         self.rollout_buffer.rewards = reshaped_reward
 
+        return kmeans.inertia_ , compute_distance_between_trajectory_and_cluster(kmeans.cluster_centers_[0], kmeans.cluster_centers_[1])
+        
         # n_trajs_per_env = len(self.episode_starts) - 1
         # for env_number in range(n_envs):
         #     synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
@@ -234,8 +236,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         # custom function to get our custom reward
         # modifies the replay buffer
         # after, we just continue with normal PPO
-        self.generate_synthetic_reward()
-
+        cluster_inertia, cluster_dist = self.generate_synthetic_reward()
+        
 
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -348,6 +350,9 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self.logger.record("train/clip_fraction", np.mean(clip_fractions))
         self.logger.record("train/loss", loss.item())
         self.logger.record("train/explained_variance", explained_var)
+        self.logger.record("train/average_cluster_distance", np.average(cluster_dist) )
+        self.logger.record("train/cluster_inertia", cluster_inertia)
+        
         if hasattr(self.policy, "log_std"):
             self.logger.record("train/std", th.exp(self.policy.log_std).mean().item())
 
