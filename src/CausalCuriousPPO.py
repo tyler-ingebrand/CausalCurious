@@ -13,7 +13,7 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
 from .clustering_functions import cluster, format_obs, compute_distance_between_trajectory_and_cluster, \
-    get_distances_between_trajectories_and_clusters
+    get_distances_between_trajectories_and_clusters, normalize_distances
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
@@ -206,10 +206,11 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         print(distance_to_other_cluster)
 
         # normalize distances
-
+        distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
+        distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
 
         # create reward
-        reward = ...
+        reward = distance_to_other_cluster - distance_to_my_cluster
 
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards)

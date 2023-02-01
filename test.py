@@ -23,7 +23,8 @@ if __name__ == '__main__':
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
-                              max_episode_length=1249
+                              max_episode_length=249,
+                              skip_frame=10,
                               )
             return env
 

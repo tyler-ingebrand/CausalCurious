@@ -60,13 +60,18 @@ def cluster(data,
             plt.show()
     return km
 
-
 def compute_distance_between_trajectory_and_cluster(traj, cluster):
     # computes pairwise distance between all timesteps in traj and cluster
-    distances = cdist_soft_dtw(traj, cluster, gamma=1.0)
+    print("d")
+    # distances = cdist_soft_dtw(traj, cluster, gamma=1.0)
+    distances = np.zeros((traj.shape[0], cluster.shape[0]))
+    for traj_timestep in range(traj.shape[0]):
+        for cluster_timestep in range(cluster.shape[0]):
+            distances[traj_timestep, cluster_timestep] = np.linalg.norm(traj[traj_timestep] - cluster[cluster_timestep])
 
     # computes allignment matrix for all pairs of points between traj and cluster.
     # 1 = well alligned, 0 not alligned. Always between 0 and 1
+    print("a")
     alignment, sim = soft_dtw_alignment(traj, cluster, gamma=1.0)
 
     # element wise multiplication. Distance depends on if it is well aligned or not.
@@ -83,12 +88,31 @@ def get_distances_between_trajectories_and_clusters(cluster_labels, cluster_cent
 
     for index, traj in enumerate(data):
         if verbose: print(index)
+        print(traj.shape)
         label = cluster_labels[index]
         my_cluster = cluster_centers[label]
         other_cluster = cluster_centers[1 - label]
+        print("test1")
         dist_mine = compute_distance_between_trajectory_and_cluster(traj, my_cluster)
+        print("test2")
         dist_other = compute_distance_between_trajectory_and_cluster(traj, other_cluster)
+        print("test3")
         distance_to_my_cluster[index] = dist_mine
         distance_to_other_cluster[index] = dist_other
 
     return distance_to_my_cluster, distance_to_other_cluster
+
+def normalize_distances(ts_dists):
+    '''
+    Normalizes the distances between time series and a cluster. 
+        Should be consistent with type of cluster, ie. distance should either be between all trajectories  
+        and their own cluster or distance between all  trajectories  and other cluster
+    Inuput
+        ts_dists: matrix of all time series distance to their own clusters, shape: (num_trajectories x N)
+    
+    Return: Normalized ts_distances. This should be shape (num_trajectories x N), N = timesteps
+    '''
+    max_ts_dist = np.max(ts_dists)
+    min_ts_dist = np.min(ts_dists)
+
+    return (ts_dists - min_ts_dist) / (max_ts_dist - min_ts_dist)
