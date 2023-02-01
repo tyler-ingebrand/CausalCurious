@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from tslearn.generators import random_walks
 from tslearn.clustering import TimeSeriesKMeans
@@ -38,10 +39,30 @@ for dimension in range(X.shape[2]):
 
 traj0 = X[0, :, :]
 cluster = km.cluster_centers_[km.labels_[0]]
-res = cdist_soft_dtw(traj0, cluster, gamma=1.0)
-print("cdist: ", res.shape)
-print(res)
+distances = cdist_soft_dtw(traj0, cluster, gamma=1.0)
+print("cdist: ", distances.shape)
+print(distances)
 
 alignment, sim = soft_dtw_alignment(traj0, cluster, gamma=1.0)
 print("align:", alignment.shape)
 print(alignment)
+
+
+# element wise multiplication
+result = distances * alignment
+print(result)
+
+summed_result = np.sum(result, axis=1)
+print(summed_result)
+
+
+plt.cla()
+plt.plot(cluster, color='black')
+plt.plot(traj0, color='b')
+for timestep, value in enumerate(traj0):
+    best_alligment = np.max(alignment, axis=)
+    plot([x1, x2], [y1, y2], color='k', linestyle='-', linewidth=2)
+plt.show()
+
+plt.plot(summed_result)
+plt.show()
