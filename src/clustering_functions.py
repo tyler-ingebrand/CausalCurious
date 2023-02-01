@@ -58,3 +58,18 @@ def cluster(data,
             plt.title("Example clustering usage")
             plt.show()
     return km
+
+def normalize_distances(ts_dists):
+    '''
+    Normalizes the distances between time series and a cluster. 
+        Should be consistent with type of cluster, ie. distance should either be between all trajectories  
+        and their own cluster or distance between all  trajectories  and other cluster
+    Inuput
+        ts_dists: matrix of all time series distance to their own clusters, shape: (num_trajectories x N)
+    
+    Return: Normalized ts_distances. This should be shape (num_trajectories x N), N = timesteps
+    '''
+    max_ts_dist = np.max(ts_dists)
+    min_ts_dist = np.min(ts_dists)
+
+    return (ts_dists - min_ts_dist) / (max_ts_dist - min_ts_dist)
