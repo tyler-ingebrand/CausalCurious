@@ -12,7 +12,7 @@ from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticP
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
-from .clustering_functions import cluster
+from .clustering_functions import cluster, format_obs
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
@@ -185,22 +185,27 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         obs = buffer.observations
 
-        # break up by number of trajectories for each env
-        list_trajs = []
-        for start, end in zip(self.episode_starts[:-1], self.episode_starts[1:]):
-            list_trajs.append(obs[start:end])
-        data = np.concatenate(list_trajs, axis=1)
-
-        # transpose so tslearn is happy
-        data = np.transpose(data, (1, 0, 2))
+        # reformat obs for clustering alg
+        data = format_obs(obs, self.episode_starts)
 
         # do tslearn stuff
-        cluster(data,
-                n_clusters=2,
-                distance_metric="softdtw",
-                multi_process = True,
-                plot = True,
-                verbose = True)
+        kmeans = cluster(data,
+                        n_clusters=2,
+                        distance_metric="softdtw",
+                        multi_process = True,
+                        plot = True,
+                        verbose = True)
+
+        # compute distances between current cluster and other cluster
+
+
+        # normalize distances
+
+
+        # create reward
+
+
+        # assign reward to respective timesteps
 
         raise Exception("TODO")
         return None

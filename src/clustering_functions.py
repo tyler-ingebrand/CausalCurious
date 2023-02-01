@@ -1,6 +1,18 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from tslearn.clustering import TimeSeriesKMeans
 
+
+def format_obs(obs, starts):
+    # break up by number of trajectories for each env
+    list_trajs = []
+    for start, end in zip(starts[:-1], starts[1:]):
+        list_trajs.append(obs[start:end])
+    data = np.concatenate(list_trajs, axis=1)
+
+    # transpose so tslearn is happy
+    data = np.transpose(data, (1, 0, 2))
+    return data
 
 def cluster(data,
             n_clusters=2,
@@ -25,8 +37,6 @@ def cluster(data,
     if verbose: print("\t", km.cluster_centers_.shape[0], " clusters of length ", km.cluster_centers_.shape[1], " with ", km.cluster_centers_.shape[2], " dimensions")
     if verbose: print("Cluster labels: ", km.labels_)
     # if verbose: print(km.transform(data))
-    print()
-
     # convert data for plotting
     if plot:
         for dimension in range(data.shape[2]):
@@ -47,3 +57,4 @@ def cluster(data,
             plt.ylabel("Dimension {} of data".format(dimension))
             plt.title("Example clustering usage")
             plt.show()
+    return km
