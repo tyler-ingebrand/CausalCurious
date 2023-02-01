@@ -23,6 +23,7 @@ if __name__ == '__main__':
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
+                              max_episode_length=1249
                               )
             return env
 
@@ -33,7 +34,8 @@ if __name__ == '__main__':
 
     # train
     model = CausalCuriousPPO("MlpPolicy", env,
-                             episode_length=env.get_attr("_max_episode_length", [0])[0], episodes_per_update=2, verbose=1)
+                             episode_length=env.get_attr("_max_episode_length", [0])[0] + 1, # this env returns the index of last step, we want total number of steps
+                             episodes_per_update=2, verbose=1)
     model.learn(total_timesteps=25000)
 
 
