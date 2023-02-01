@@ -181,7 +181,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         raise Exception("Episodes do not have the same length, TODO Can we handle this?")
                     self.episode_starts.append(i)
             self.episode_starts.append(len(buffer.episode_starts)) # append the length of the buffer so we have a marker at the start and end of each episode
-            print("Episode starts: ", self.episode_starts)
+            # print("Episode starts: ", self.episode_starts)
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         obs = buffer.observations
@@ -202,8 +202,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
                                                                                                             verbose=True)
-        print(distance_to_my_cluster)
-        print(distance_to_other_cluster)
+        # print(distance_to_my_cluster)
+        # print(distance_to_other_cluster)
 
         # normalize distances
         distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
@@ -211,13 +211,20 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # create reward
         reward = distance_to_other_cluster - distance_to_my_cluster
-
+        # print("made it past reward, only need to reasign")
+        
         # assign reward to respective timesteps
-        n_envs = len(buffer.rewards)
-        n_trajs_per_env = len(self.episode_starts) - 1
-        for env_number in range(n_envs):
-            synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
-            self.rollout_buffer.rewards[env_number] = synth_reward
+        n_envs = len(buffer.rewards[1])
+        r1 = reward[: n_envs]
+        r2 = reward[n_envs:]
+        
+        reshaped_reward = np.concatenate((r1, r2), axis = 1)
+        self.rollout_buffer.rewards = reshaped_reward
+
+        # n_trajs_per_env = len(self.episode_starts) - 1
+        # for env_number in range(n_envs):
+        #     synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
+        #     self.rollout_buffer.rewards[env_number] = synth_reward
 
     def train(self) -> None:
         """

@@ -28,7 +28,7 @@ for dimension in range(X.shape[2]):
     # plot cluster centers
     clusters = km.cluster_centers_[:,:,dimension].transpose()
     plt.plot(clusters, color='black')[0].set_label('Cluster Center')
-
+ 
     # plot and show
     plt.legend()
     plt.xlabel("Time")
@@ -45,7 +45,12 @@ xs = np.linspace(0, 6.28, 100)
 traj0 = np.sin(xs).reshape(-1, 1)
 cluster = np.sin(xs + 0.15).reshape(-1, 1)
 
-distances = cdist_soft_dtw(traj0, cluster, gamma=1.0)
+# distances = cdist_soft_dtw(traj0, cluster, gamma=1.0)
+distances = np.zeros((traj0.shape[0], cluster.shape[0]))
+for traj_timestep in range(traj0.shape[0]):
+    for cluster_timestep in range(cluster.shape[0]):
+        distances[traj_timestep, cluster_timestep] = np.linalg.norm(traj0[traj_timestep] - cluster[cluster_timestep])
+
 print("cdist: ", distances.shape)
 print(distances)
 
