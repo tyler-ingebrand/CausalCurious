@@ -181,7 +181,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         raise Exception("Episodes do not have the same length, TODO Can we handle this?")
                     self.episode_starts.append(i)
             self.episode_starts.append(len(buffer.episode_starts)) # append the length of the buffer so we have a marker at the start and end of each episode
-            print("Episode starts: ", self.episode_starts)
+            # print("Episode starts: ", self.episode_starts)
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         obs = buffer.observations
@@ -209,15 +209,22 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # create reward
         reward = distance_to_other_cluster - distance_to_my_cluster
-
+        # print("made it past reward, only need to reasign")
+        
         # assign reward to respective timesteps
-        n_envs = len(buffer.rewards)
-        n_trajs_per_env = len(self.episode_starts) - 1
-        print(n_envs, n_trajs_per_env)
-        print(reward.shape)
-        for env_number in range(n_envs):
-            synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
-            self.rollout_buffer.rewards[env_number] = synth_reward
+        n_envs = len(buffer.rewards[1])
+        r1 = reward[: n_envs]
+        r2 = reward[n_envs:]
+        
+        reshaped_reward = np.concatenate((r1, r2), axis = 1)
+        self.rollout_buffer.rewards = reshaped_reward
+
+        return kmeans.inertia_ , compute_distance_between_trajectory_and_cluster(kmeans.cluster_centers_[0], kmeans.cluster_centers_[1])
+        
+        # n_trajs_per_env = len(self.episode_starts) - 1
+        # for env_number in range(n_envs):
+        #     synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
+        #     self.rollout_buffer.rewards[env_number] = synth_reward
 
     def train(self) -> None:
         """
@@ -227,8 +234,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         # custom function to get our custom reward
         # modifies the replay buffer
         # after, we just continue with normal PPO
-        self.generate_synthetic_reward()
-
+        cluster_inertia, cluster_dist = self.generate_synthetic_reward()
+        
 
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -341,6 +348,9 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self.logger.record("train/clip_fraction", np.mean(clip_fractions))
         self.logger.record("train/loss", loss.item())
         self.logger.record("train/explained_variance", explained_var)
+        self.logger.record("train/average_cluster_distance", np.average(cluster_dist) )
+        self.logger.record("train/cluster_inertia", cluster_inertia)
+        
         if hasattr(self.policy, "log_std"):
             self.logger.record("train/std", th.exp(self.policy.log_std).mean().item())
 
