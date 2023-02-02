@@ -62,7 +62,6 @@ def cluster(data,
 
 def compute_distance_between_trajectory_and_cluster(traj, cluster):
     # computes pairwise distance between all timesteps in traj and cluster
-    print("d")
     # distances = cdist_soft_dtw(traj, cluster, gamma=1.0)
     distances = np.zeros((traj.shape[0], cluster.shape[0]))
     for traj_timestep in range(traj.shape[0]):
@@ -71,7 +70,6 @@ def compute_distance_between_trajectory_and_cluster(traj, cluster):
 
     # computes allignment matrix for all pairs of points between traj and cluster.
     # 1 = well alligned, 0 not alligned. Always between 0 and 1
-    print("a")
     alignment, sim = soft_dtw_alignment(traj, cluster, gamma=1.0)
 
     # element wise multiplication. Distance depends on if it is well aligned or not.

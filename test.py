@@ -3,6 +3,8 @@ from causal_world.envs import CausalWorld
 from causal_world.task_generators import generate_task
 from pybullet_utils.util import set_global_seeds
 from stable_baselines3.common.vec_env import SubprocVecEnv
+
+from src.custom_task import MyOwnTask
 from src.CausalCuriousPPO import *
 from stable_baselines3.common.env_util import make_vec_env
 
@@ -10,7 +12,6 @@ if __name__ == '__main__':
 
     # parameters ##
     seed = 0
-    task_type = 'general'
     number_envs = 8
     ###############
 
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     def _make_env(rank):
 
         def _init():
-            task = generate_task(task_generator_id=task_type)
+            task = MyOwnTask('Sphere' if rank < number_envs/2 else 'Cube')
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,

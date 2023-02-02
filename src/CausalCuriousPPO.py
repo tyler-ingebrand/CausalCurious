@@ -202,8 +202,6 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
                                                                                                             verbose=True)
-        print(distance_to_my_cluster)
-        print(distance_to_other_cluster)
 
         # normalize distances
         distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
@@ -215,6 +213,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards)
         n_trajs_per_env = len(self.episode_starts) - 1
+        print(n_envs, n_trajs_per_env)
+        print(reward.shape)
         for env_number in range(n_envs):
             synth_reward = np.concatenate(reward[i * n_envs + env_number] for i in range(n_trajs_per_env))
             self.rollout_buffer.rewards[env_number] = synth_reward
