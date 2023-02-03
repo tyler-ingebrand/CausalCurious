@@ -189,9 +189,11 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         if len(self.episode_starts) == 0:
             self.get_episode_starts()
 
-        # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
-        obs = buffer.observations
+        # get obs data. Remove robot states since we dont care about those for clyustering
+        # Robot obs are the first 27 dims in statespace
+        obs = buffer.observations[:, :, 27:]
 
+        # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
         data = format_obs(obs, self.episode_starts)
 
@@ -207,7 +209,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
-                                                                                                            verbose=False)
+                                                                                                            verbose=False,
+                                                                                                            plot=True)
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
 
@@ -243,7 +246,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self.logger.record("train/mean_distance_other_cluster", mean_distance_to_other_cluster)
         self.mean_distance_my_cluster.append(mean_distance_to_my_cluster)
         self.mean_distance_other_cluster.append(mean_distance_to_other_cluster)
-        self.timesteps.append(self._total_timesteps)
+        self.timesteps.append(self.num_timesteps)
 
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)

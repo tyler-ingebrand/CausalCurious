@@ -78,7 +78,7 @@ def compute_distance_between_trajectory_and_cluster(traj, cluster):
     summed_result = np.sum(result, axis=1)
     return summed_result
 
-def get_distances_between_trajectories_and_clusters(cluster_labels, cluster_centers, data, verbose=False):
+def get_distances_between_trajectories_and_clusters(cluster_labels, cluster_centers, data, verbose=False, plot=True):
     # compute distances between current cluster and other cluster
     distance_to_my_cluster = np.zeros((data.shape[0], data.shape[1]))
     distance_to_other_cluster = np.zeros((data.shape[0], data.shape[1]))
@@ -92,6 +92,12 @@ def get_distances_between_trajectories_and_clusters(cluster_labels, cluster_cent
         dist_other = compute_distance_between_trajectory_and_cluster(traj, other_cluster)
         distance_to_my_cluster[index] = dist_mine
         distance_to_other_cluster[index] = dist_other
+
+    if plot:
+        plt.plot(np.transpose(distance_to_my_cluster), color='b')[0].set_label("Distance to my cluster")
+        plt.plot(np.transpose(distance_to_other_cluster), color='r')[0].set_label("Distance to other cluster")
+        plt.legend()
+        plt.show()
 
     return distance_to_my_cluster, distance_to_other_cluster
 

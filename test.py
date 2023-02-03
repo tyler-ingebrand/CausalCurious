@@ -20,7 +20,9 @@ if __name__ == '__main__':
     # Get causal world environment. second half are cube, first half are sphere
     def _make_env(rank):
         def _init():
-            task = MyOwnTask('Sphere' if rank < number_envs/2 else 'Cube')
+            task = MyOwnTask(shape="Cube",
+                             size="Big" if rank < number_envs/2 else "Small",
+                             mass="Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
@@ -47,6 +49,7 @@ if __name__ == '__main__':
     plt.xlabel("Env Interactions")
     plt.ylabel("Euclidean Distance")
     plt.title("Cluster Properties During Training")
+    plt.legend()
     plt.show()
 
     # show episode
