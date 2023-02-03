@@ -12,7 +12,7 @@ from stable_baselines3.common.env_util import make_vec_env
 if __name__ == '__main__':
 
     # parameters ##
-    seed = 0
+    seed = 22
     number_envs = 8
     ###############
 
@@ -52,6 +52,7 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
 
+    print(" FINISHED LEARNING" )
     # show episode
     obs = env.reset()
     while True:
