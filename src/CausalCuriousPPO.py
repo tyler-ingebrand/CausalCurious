@@ -195,7 +195,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
-        data = format_obs(obs, self.episode_starts)
+        data = format_obs(obs, self.episode_starts, normalize=True)
 
         # do tslearn stuff
         kmeans = cluster(data,
