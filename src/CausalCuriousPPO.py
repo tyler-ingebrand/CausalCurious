@@ -195,15 +195,16 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
-        data = format_obs(obs, self.episode_starts)
+        data = format_obs(obs, self.episode_starts, normalize=True)
 
         # do tslearn stuff
         kmeans = cluster(data,
                         n_clusters=2,
                         distance_metric="softdtw",
                         multi_process = True,
-                        plot = False,
-                        verbose = False)
+                        plot = True,
+                        verbose = False,
+                        timestep=self.num_timesteps)
 
         # compute distances between current cluster and other cluster
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,

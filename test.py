@@ -20,8 +20,8 @@ if __name__ == '__main__':
     # Get causal world environment. second half are cube, first half are sphere
     def _make_env(rank):
         def _init():
-            task = MyOwnTask(shape="Cube",
-                             size="Big" if rank < number_envs/2 else "Small",
+            task = MyOwnTask(shape="Cube" if rank < number_envs/2 else "Sphere",
+                             size="Big", #  if rank < number_envs/2 else "Small",
                              mass="Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
