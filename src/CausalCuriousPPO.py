@@ -202,15 +202,16 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         n_clusters=2,
                         distance_metric="softdtw",
                         multi_process = True,
-                        plot = False,
-                        verbose = False)
+                        plot = True,
+                        verbose = False,
+                        timestep=self.num_timesteps)
 
         # compute distances between current cluster and other cluster
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
                                                                                                             verbose=False,
-                                                                                                            plot=True)
+                                                                                                            plot=False)
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
 

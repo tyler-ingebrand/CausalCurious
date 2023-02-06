@@ -1,18 +1,31 @@
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.metrics import cdist_soft_dtw, soft_dtw_alignment
 
 
-def format_obs(obs, starts):
+def format_obs(obs, starts, normalize=True):
     # break up by number of trajectories for each env
     list_trajs = []
     for start, end in zip(starts[:-1], starts[1:]):
         list_trajs.append(obs[start:end])
     data = np.concatenate(list_trajs, axis=1)
 
-    # transpose so tslearn is happy
+    # transpose so tslearn is happy. Is in n_trajs X n_timesteps X state space dimensions
     data = np.transpose(data, (1, 0, 2))
+
+    # normalize all data to be 0 mean and 1 std dev
+    if normalize:
+        for dimension in range(data.shape[2]):
+            slice = data[:, :, dimension]
+            mean = np.mean(slice)
+            std = np.std(slice)
+            data[:, :, dimension] = (data[:, :, dimension] - mean)/std
+
+
+
     return data
 
 def cluster(data,
@@ -20,9 +33,10 @@ def cluster(data,
             distance_metric:str="softdtw",
             multi_process=True,
             plot=True,
-            verbose=True):
+            verbose=True,
+            timestep=0):
     assert distance_metric == "softdtw" or distance_metric == "euclidean", "Distance metric must be one of 'euclidean' or 'softdtw', got {}".format(distance_metric)
-
+    plt.rcParams["figure.figsize"] = (3.5*5, 3.5*4)
     if verbose: print("Data: ", data.shape)
     print("\t", data.shape[0], " trajectories of length ", data.shape[1], " with ", data.shape[2], " dimensions")
 
@@ -40,24 +54,48 @@ def cluster(data,
     # if verbose: print(km.transform(data))
     # convert data for plotting
     if plot:
+        dimension_names = {0: "X",
+                           1: "Y",
+                           2: "Z",
+                           3: "Rotation X",
+                           4: "Rotation Y",
+                           5: "Rotation Z",
+                           6: "Rotation W",
+                           7: "Vel. X",
+                           8: "Vel. Y",
+                           9: "Vel. Z",
+                           10: "Ang. Vel. X",
+                           11: "Ang. Vel. Y",
+                           12: "Ang. Vel. Z",
+                           }
         for dimension in range(data.shape[2]):
+            labeled = [False for c in range(km.cluster_centers_.shape[0])]
+            plt.subplot(4, 5, dimension + 1)
             for cluster in range(km.cluster_centers_.shape[0]):
                 for traj in range(data.shape[0]):
                     if km.labels_[traj] == cluster:
+
                         data_to_graph = data[traj, :, dimension].transpose()
                         plt.plot(data_to_graph, color='r' if cluster == 0 else 'b' if cluster == 1 else 'g', alpha=0.5,
-                                 label='Trajectory in cluster {}'.format(cluster) if traj == 0 else None)
+                                 label='Trajectory in cluster {}'.format(cluster) if not labeled[cluster] else None)
+                        if not labeled[cluster]:
+                            labeled[cluster] = True
+
 
             # plot cluster centers
             clusters = km.cluster_centers_[:, :, dimension].transpose()
             plt.plot(clusters, color='black')[0].set_label('Cluster Center')
 
             # plot and show
-            plt.legend()
-            plt.xlabel("Time")
-            plt.ylabel("Dimension {} of data".format(dimension))
-            plt.title("Example clustering usage")
-            plt.show()
+            plt.title(dimension_names[dimension])
+            if dimension == 2:
+                plt.legend(loc='upper center')
+        plt.tight_layout()
+
+        # create diretories for results
+        os.makedirs("./debug/cluster_plots/", exist_ok=True)
+        plt.savefig("./debug/cluster_plots/timestep_{}.png".format(timestep))
+        plt.cla()
     return km
 
 def compute_distance_between_trajectory_and_cluster(traj, cluster):

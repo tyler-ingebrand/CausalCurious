@@ -66,7 +66,6 @@ class MyOwnTask(BaseTask):
 
         # define state space
         self._task_stage_observation_keys = [
-            "tool_block_type", "tool_block_size",
             "tool_block_cartesian_position", "tool_block_orientation",
             "tool_block_linear_velocity", "tool_block_angular_velocity",
         ]
