@@ -95,8 +95,8 @@ def cluster(data,
         # create diretories for results
         os.makedirs("./debug/cluster_plots/", exist_ok=True)
         plt.savefig("./debug/cluster_plots/timestep_{}.png".format(timestep))
-        plt.cla()
-    return km
+        plt.clf()
+        return km
 
 def compute_distance_between_trajectory_and_cluster(traj, cluster):
     # computes pairwise distance between all timesteps in traj and cluster
