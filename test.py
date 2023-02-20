@@ -8,6 +8,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from src.custom_task import MyOwnTask
 from src.CausalCuriousPPO import *
 from stable_baselines3.common.env_util import make_vec_env
+# For Sophia, in the event I forget how to activate my virtual environment:  source /path/to/venv/bin/activate
 
 if __name__ == '__main__':
 
@@ -18,10 +19,11 @@ if __name__ == '__main__':
 
 
     # Get causal world environment. second half are cube, first half are sphere
+    # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
     def _make_env(rank):
         def _init():
-            task = MyOwnTask(shape="Cube" if rank < number_envs/2 else "Sphere",
-                             size="Big", #  if rank < number_envs/2 else "Small",
+            task = MyOwnTask(shape="Cube", # if rank < number_envs/2 else "Sphere",
+                             size="Big" if rank < number_envs/2 else "Small",
                              mass="Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
