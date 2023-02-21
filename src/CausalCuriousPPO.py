@@ -13,7 +13,7 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
 from .clustering_functions import cluster, format_obs, compute_distance_between_trajectory_and_cluster, \
-    get_distances_between_trajectories_and_clusters, normalize_distances
+    get_distances_between_trajectories_and_clusters, normalize_distances, get_change_in_distance
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
@@ -212,12 +212,15 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                                                                                                             data,
                                                                                                             verbose=False,
                                                                                                             plot=False)
+
+        change_in_distance_to_my_cluster, change_in_distance_to_other_cluster = get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster)
+
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
 
         # normalize distances
-        distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
-        distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
+        distance_to_my_cluster = normalize_distances(change_in_distance_to_my_cluster)
+        distance_to_other_cluster = normalize_distances(change_in_distance_to_other_cluster)
 
         # create reward
         reward = distance_to_other_cluster - distance_to_my_cluster
@@ -228,7 +231,6 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         restacked_reward = [reward[n_envs * i: n_envs * (i+1)] for i in range(n_episodes)]
         reshaped_reward = np.transpose(np.concatenate(restacked_reward, axis = 1))
         self.rollout_buffer.rewards = reshaped_reward
-
         return mean_distance_to_my_cluster, mean_distance_to_other_cluster
 
          #return kmeans.inertia_ , compute_distance_between_trajectory_and_cluster(kmeans.cluster_centers_[0], kmeans.cluster_centers_[1])

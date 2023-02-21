@@ -169,3 +169,12 @@ def get_reward(norm_dist_own, norm_dist_other):
 
 
 
+def get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster):
+    distance_to_my_cluster[:, :-1] = distance_to_my_cluster[:, 1:] - distance_to_my_cluster[:, :-1]
+    distance_to_other_cluster[:, :-1] = distance_to_other_cluster[:, 1:] - distance_to_other_cluster[:, :-1]
+
+    distance_to_my_cluster[:, -1] = 0.0
+    distance_to_other_cluster[:, -1] = 0.0
+
+
+    return distance_to_my_cluster, distance_to_other_cluster
