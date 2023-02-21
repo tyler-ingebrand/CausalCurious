@@ -223,7 +223,9 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         distance_to_other_cluster = normalize_distances(change_in_distance_to_other_cluster)
 
         # create reward
-        reward = distance_to_other_cluster - distance_to_my_cluster
+        # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
+        ## TEST: run this with only the distance to the other cluster
+        reward = distance_to_other_cluster
 
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards[1])
