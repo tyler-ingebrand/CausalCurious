@@ -22,7 +22,7 @@ if __name__ == '__main__':
     total_timesteps = 1000_000
     ###############
 
-    torch.seed(seed)
+    torch.manual_seed(seed)
 
     # Get causal world environment. second half are cube, first half are sphere
     # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
