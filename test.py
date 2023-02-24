@@ -1,5 +1,6 @@
 import gym
 import matplotlib.pyplot as plt
+import torch
 from causal_world.envs import CausalWorld
 from causal_world.task_generators import generate_task
 from pybullet_utils.util import set_global_seeds
@@ -21,13 +22,14 @@ if __name__ == '__main__':
     total_timesteps = 1000_000
     ###############
 
+    torch.seed(seed)
 
     # Get causal world environment. second half are cube, first half are sphere
     # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
     def _make_env(rank):
         def _init():
-            task = MyOwnTask(shape="Cube", # if rank < number_envs/2 else "Sphere",
-                             size="Big" if rank < number_envs/2 else "Small",
+            task = MyOwnTask(shape="Cube" if rank < number_envs/2 else "Sphere",
+                             size="Big" , # if rank < number_envs/2 else "Small",
                              mass="Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,

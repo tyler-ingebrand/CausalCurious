@@ -205,6 +205,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         plot = True,
                         verbose = False,
                         timestep=self.num_timesteps)
+        print(kmeans.labels_)
 
         # compute distances between current cluster and other cluster
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
@@ -212,20 +213,20 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                                                                                                             data,
                                                                                                             verbose=False,
                                                                                                             plot=False)
-
-        change_in_distance_to_my_cluster, change_in_distance_to_other_cluster = get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster)
-
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
 
+        # change_in_distance_to_my_cluster, change_in_distance_to_other_cluster = get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster)
+
+
         # normalize distances
-        distance_to_my_cluster = normalize_distances(change_in_distance_to_my_cluster)
-        distance_to_other_cluster = normalize_distances(change_in_distance_to_other_cluster)
+        distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
+        distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
 
         # create reward
         # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
         ## TEST: run this with only the distance to the other cluster
-        reward = distance_to_other_cluster
+        reward = distance_to_other_cluster - distance_to_my_cluster
 
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards[1])
