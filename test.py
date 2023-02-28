@@ -16,12 +16,13 @@ import os
 if __name__ == '__main__':
 
     # parameters ##
-    seed = 2
+    seed = 1
     number_envs = 8
     episodes_per_update = 8
     total_timesteps = 1000_000
-    change_shape = True
+    change_shape = False
     change_size = False
+    change_mass = True
     ###############
 
 
@@ -34,7 +35,7 @@ if __name__ == '__main__':
         def _init():
             task = MyOwnTask(shape="Sphere" if rank < number_envs/2 and change_shape else "Cube",
                              size="Small" if rank < number_envs/2  and change_size else "Big",
-                             mass="Heavy")
+                             mass="Light" if rank < number_envs/2 and change_mass else "Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
@@ -45,6 +46,7 @@ if __name__ == '__main__':
 
         set_global_seeds(seed)
         return _init
+
     env = SubprocVecEnv([_make_env(i) for i in range(number_envs)])
 
 
@@ -58,7 +60,7 @@ if __name__ == '__main__':
 
 
     # plot result of learning
-    exp_dir = "{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", seed, total_timesteps)
+    exp_dir = "{}{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
     plt.plot(model.timesteps, model.mean_distance_my_cluster, label="Cluster Size")
     plt.plot(model.timesteps, model.mean_distance_other_cluster, label="Cluster Separation")
