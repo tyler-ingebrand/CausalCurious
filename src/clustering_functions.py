@@ -34,7 +34,8 @@ def cluster(data,
             multi_process=True,
             plot=True,
             verbose=True,
-            timestep=0):
+            timestep=0,
+            debug_dir=None):
     assert distance_metric == "softdtw" or distance_metric == "euclidean", "Distance metric must be one of 'euclidean' or 'softdtw', got {}".format(distance_metric)
     plt.rcParams["figure.figsize"] = (3.5*5, 3.5*4)
     if verbose: print("Data: ", data.shape)
@@ -93,8 +94,12 @@ def cluster(data,
         plt.tight_layout()
 
         # create diretories for results
-        os.makedirs("./debug/cluster_plots/", exist_ok=True)
-        plt.savefig("./debug/cluster_plots/timestep_{}.png".format(timestep))
+        if not debug_dir:
+            os.makedirs("./debug/cluster_plots/", exist_ok=True)
+            plt.savefig("./debug/cluster_plots/timestep_{}.png".format(timestep))
+        else:
+            os.makedirs("{}/debug/cluster_plots/".format(debug_dir), exist_ok=True)
+            plt.savefig("{}/debug/cluster_plots/timestep_{}.png".format(debug_dir, timestep))
         plt.clf()
         return km
 
