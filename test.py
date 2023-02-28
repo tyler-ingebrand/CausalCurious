@@ -16,20 +16,24 @@ import os
 if __name__ == '__main__':
 
     # parameters ##
-    seed = 22
+    seed = 2
     number_envs = 8
     episodes_per_update = 8
     total_timesteps = 1000_000
+    change_shape = True
+    change_size = False
     ###############
 
+
+    assert change_shape or change_size
     torch.manual_seed(seed)
 
     # Get causal world environment. second half are cube, first half are sphere
     # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
     def _make_env(rank):
         def _init():
-            task = MyOwnTask(shape="Cube" if rank < number_envs/2 else "Sphere",
-                             size="Big" , # if rank < number_envs/2 else "Small",
+            task = MyOwnTask(shape="Sphere" if rank < number_envs/2 and change_shape else "Cube",
+                             size="Small" if rank < number_envs/2  and change_size else "Big",
                              mass="Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
@@ -54,14 +58,15 @@ if __name__ == '__main__':
 
 
     # plot result of learning
-    os.makedirs("results", exist_ok=True)
+    exp_dir = "{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", seed, total_timesteps)
+    os.makedirs("results/{}".format(exp_dir), exist_ok=True)
     plt.plot(model.timesteps, model.mean_distance_my_cluster, label="Cluster Size")
     plt.plot(model.timesteps, model.mean_distance_other_cluster, label="Cluster Separation")
     plt.xlabel("Env Interactions")
     plt.ylabel("Euclidean Distance")
     plt.title("Cluster Properties During Training")
     plt.legend()
-    plt.savefig("results/cluster_distances.png")
+    plt.savefig("results/{}/cluster_distances.png".format(exp_dir))
 
     # show episode, save
     seconds_per_frame = 0.1
@@ -77,4 +82,4 @@ if __name__ == '__main__':
             images.append(ImageClip(frame).set_duration(seconds_per_frame))
             done = dones.any()
         video = concatenate(images, method="compose")
-        video.write_videofile("results/{}_episode_{}.mp4".format(  base_file_name, episode), fps=24)
+        video.write_videofile("results/{}/{}_episode_{}.mp4".format( exp_dir, base_file_name, episode), fps=24)
