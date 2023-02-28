@@ -26,7 +26,7 @@ if __name__ == '__main__':
     ###############
 
 
-    assert change_shape or change_size
+    assert change_shape or change_size or change_mass
     torch.manual_seed(seed)
 
     # Get causal world environment. second half are cube, first half are sphere
