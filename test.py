@@ -16,7 +16,7 @@ import os
 if __name__ == '__main__':
 
     # parameters ##
-    seed = 2
+    seed = 3
     number_envs = 8
     episodes_per_update = 8
     total_timesteps = 1000_000
@@ -27,6 +27,8 @@ if __name__ == '__main__':
 
     assert change_shape or change_size
     torch.manual_seed(seed)
+    exp_dir = "{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", seed, total_timesteps)
+    os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
     # Get causal world environment. second half are cube, first half are sphere
     # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
@@ -51,15 +53,14 @@ if __name__ == '__main__':
     # train
     model = CausalCuriousPPO("MlpPolicy", env,
                              episode_length=env.get_attr("_max_episode_length", [0])[0] + 1, # this env returns the index of last step, we want total number of steps
-                             episodes_per_update=episodes_per_update, verbose=1)
+                             episodes_per_update=episodes_per_update, verbose=1,
+                             debug_dir = "results/{}".format(exp_dir))
     model.learn(total_timesteps=total_timesteps)
 
 
 
 
     # plot result of learning
-    exp_dir = "{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", seed, total_timesteps)
-    os.makedirs("results/{}".format(exp_dir), exist_ok=True)
     plt.plot(model.timesteps, model.mean_distance_my_cluster, label="Cluster Size")
     plt.plot(model.timesteps, model.mean_distance_other_cluster, label="Cluster Separation")
     plt.xlabel("Env Interactions")

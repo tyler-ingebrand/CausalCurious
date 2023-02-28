@@ -15,6 +15,9 @@ from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 from .clustering_functions import cluster, format_obs, compute_distance_between_trajectory_and_cluster, \
     get_distances_between_trajectories_and_clusters, normalize_distances, get_change_in_distance
 
+import time
+
+
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
 
 
@@ -90,6 +93,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
+        debug_dir=None,
     ):
         n_envs = env.num_envs if isinstance(env, VecEnv) else 1
         n_steps = episode_length * episodes_per_update
@@ -160,7 +164,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         self.mean_distance_my_cluster = []
         self.mean_distance_other_cluster = []
         self.timesteps = []
-
+        self.debug_dir = debug_dir
     def _setup_model(self) -> None:
         super()._setup_model()
 
@@ -195,7 +199,10 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
+        start = time.time()
         data = format_obs(obs, self.episode_starts, normalize=False)
+        print("Format obs seconds: ", time.time() - start)
+        start = time.time()
 
         # do tslearn stuff
         kmeans = cluster(data,
@@ -204,29 +211,35 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         multi_process = True,
                         plot = True,
                         verbose = False,
-                        timestep=self.num_timesteps)
+                        timestep=self.num_timesteps,
+                        debug_dir=self.debug_dir)
         print(kmeans.labels_)
-
+        print("Cluster seconds: ", time.time() - start)
+        start = time.time()
         # compute distances between current cluster and other cluster
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
                                                                                                             verbose=False,
                                                                                                             plot=False)
+        print("Distances seconds: ", time.time() - start)
+        start = time.time()
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
-
+        print("NP Mean seconds: ", time.time() - start)
+        start = time.time()
         # change_in_distance_to_my_cluster, change_in_distance_to_other_cluster = get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster)
 
 
         # normalize distances
         distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
         distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
-
+        print("Norm distances seconds: ", time.time() - start)
+        start = time.time()
         # create reward
         # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
         ## TEST: run this with only the distance to the other cluster
-        reward = distance_to_other_cluster - distance_to_my_cluster
+        reward = 3 * distance_to_other_cluster - distance_to_my_cluster
 
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards[1])
@@ -234,6 +247,8 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
         restacked_reward = [reward[n_envs * i: n_envs * (i+1)] for i in range(n_episodes)]
         reshaped_reward = np.transpose(np.concatenate(restacked_reward, axis = 1))
         self.rollout_buffer.rewards = reshaped_reward
+        print("Cleanup  seconds: ", time.time() - start)
+        start = time.time()
         return mean_distance_to_my_cluster, mean_distance_to_other_cluster
 
          #return kmeans.inertia_ , compute_distance_between_trajectory_and_cluster(kmeans.cluster_centers_[0], kmeans.cluster_centers_[1])
