@@ -4,18 +4,20 @@ from typing import Any, Dict, Optional, Type, TypeVar, Union
 import numpy as np
 import torch as th
 from gym import spaces
+from stable_baselines3.common.buffers import RolloutBuffer
+from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import VecEnv
 from torch.nn import functional as F
 
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, MultiInputActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
-from stable_baselines3.common.utils import explained_variance, get_schedule_fn
+from stable_baselines3.common.utils import explained_variance, get_schedule_fn, obs_as_tensor
 
 from .clustering_functions import cluster, format_obs, compute_distance_between_trajectory_and_cluster, \
     get_distances_between_trajectories_and_clusters, normalize_distances, get_change_in_distance
 
 import time
+from .CustomPolicies import *
 
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
