@@ -4,7 +4,7 @@ from tslearn.generators import random_walks
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.metrics import cdist_soft_dtw, soft_dtw_alignment
 import time
-
+import os
 
 # random data
 X = random_walks(n_ts=64, sz=250, d=13)
@@ -13,8 +13,10 @@ print("\t", X.shape[0], " trajectories of length ", X.shape[1], " with ", X.shap
 
 # run clustering alg
 start = time.time()
+
 n_jobs = -1
 km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", max_iter=5, max_iter_barycenter=5, random_state=0, n_jobs=n_jobs).fit(X)
+
 print("Time = ", time.time() - start)
 # km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", max_iter=5, random_state=0).fit(X)
 print("Clusters: ", km.cluster_centers_.shape)
