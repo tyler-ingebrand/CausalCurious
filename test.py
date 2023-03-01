@@ -16,18 +16,20 @@ import os
 if __name__ == '__main__':
 
     # parameters ##
-    seed = 3
+    seed = 1
     number_envs = 8
     episodes_per_update = 8
     total_timesteps = 1000_000
     change_shape = True
     change_size = False
+    change_mass = False
+    # separation_only = False # you have to go in and actually change the reward 
     ###############
 
 
-    assert change_shape or change_size
+    assert change_shape or change_size or change_mass
     torch.manual_seed(seed)
-    exp_dir = "{}{}seed_{}_steps_{}".format("change_shape_" if change_shape else "", "change_size_" if change_size else "", seed, total_timesteps)
+    exp_dir = "{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
     # Get causal world environment. second half are cube, first half are sphere
@@ -36,7 +38,7 @@ if __name__ == '__main__':
         def _init():
             task = MyOwnTask(shape="Sphere" if rank < number_envs/2 and change_shape else "Cube",
                              size="Small" if rank < number_envs/2  and change_size else "Big",
-                             mass="Heavy")
+                             mass="Light" if rank < number_envs/2 and change_mass else "Heavy")
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
@@ -47,6 +49,7 @@ if __name__ == '__main__':
 
         set_global_seeds(seed)
         return _init
+
     env = SubprocVecEnv([_make_env(i) for i in range(number_envs)])
 
 
@@ -54,7 +57,8 @@ if __name__ == '__main__':
     model = CausalCuriousPPO("MlpPolicy", env,
                              episode_length=env.get_attr("_max_episode_length", [0])[0] + 1, # this env returns the index of last step, we want total number of steps
                              episodes_per_update=episodes_per_update, verbose=1,
-                             debug_dir = "results/{}".format(exp_dir))
+                             debug_dir = "results/{}".format(exp_dir) )
+
     model.learn(total_timesteps=total_timesteps)
 
 
