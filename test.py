@@ -1,5 +1,6 @@
 import gym
 import matplotlib.pyplot as plt
+import numpy
 import torch
 from causal_world.envs import CausalWorld
 from causal_world.task_generators import generate_task
@@ -17,9 +18,9 @@ if __name__ == '__main__':
 
     # parameters ##
     seed = 1
-    number_envs = 8
-    episodes_per_update = 8
-    total_timesteps = 1000_000
+    number_envs = 32
+    episodes_per_update = 1
+    total_timesteps =   1000_000
     change_shape = True
     change_size = False
     change_mass = False
@@ -29,6 +30,7 @@ if __name__ == '__main__':
 
     assert change_shape or change_size or change_mass
     torch.manual_seed(seed)
+    numpy.random.seed(seed)
     exp_dir = "{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
@@ -44,7 +46,22 @@ if __name__ == '__main__':
                               seed=seed + rank,
                               max_episode_length=249,
                               skip_frame=10,
+                              action_mode='end_effector_positions'
                               )
+            # random_intervention_dict = env.do_intervention(
+            #       {'tool_block': {"initial_position":[0,0,0.2]}},
+            #     check_bounds=False
+            # )
+            # print(random_intervention_dict)
+
+            a = -0.05
+            b = 0.05
+            random_offset = (b - a) * numpy.random.random_sample() + a
+            env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'] += random_offset
+
+
+            #print(env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'])
+            #print(env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_orientation'])
             return env
 
         set_global_seeds(seed)
@@ -80,7 +97,7 @@ if __name__ == '__main__':
         images = []
         done = False
         obs = env.reset()
-        while not done:
+        for t in range(100):
             action, _states = model.predict(obs)
             obs, rewards, dones, info = env.step(action)
             frame = env.render(mode='rgb_array')
@@ -88,3 +105,6 @@ if __name__ == '__main__':
             done = dones.any()
         video = concatenate(images, method="compose")
         video.write_videofile("results/{}/{}_episode_{}.mp4".format( exp_dir, base_file_name, episode), fps=24)
+        del images
+        del video
+
