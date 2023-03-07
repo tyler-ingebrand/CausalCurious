@@ -663,6 +663,13 @@ class ActorCriticPolicy(BasePolicy):
         """
         mean_actions = self.action_net(latent_pi)
 
+        if torch.isnan(mean_actions).any():
+            print("Mean actions nan")
+            print(mean_actions)
+        if torch.isnan(self.log_std).any():
+            print("log_std nan")
+            print(self.log_std)
+
         if isinstance(self.action_dist, DiagGaussianDistribution):
             return self.action_dist.proba_distribution(mean_actions, self.log_std)
         elif isinstance(self.action_dist, CategoricalDistribution):
