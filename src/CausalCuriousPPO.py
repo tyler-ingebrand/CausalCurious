@@ -2,6 +2,7 @@ import warnings
 from typing import Any, Dict, Optional, Type, TypeVar, Union
 
 import numpy as np
+import torch
 import torch as th
 from gym import spaces
 from stable_baselines3.common.buffers import RolloutBuffer
@@ -201,10 +202,7 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
-        start = time.time()
         data = format_obs(obs, self.episode_starts, normalize=False)
-        print("Format obs seconds: ", time.time() - start)
-        start = time.time()
 
         # do tslearn stuff
         kmeans = cluster(data,
@@ -216,41 +214,50 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                         timestep=self.num_timesteps,
                         debug_dir=self.debug_dir)
         print(kmeans.labels_)
-        print("Cluster seconds: ", time.time() - start)
-        start = time.time()
+
         # compute distances between current cluster and other cluster
         distance_to_my_cluster, distance_to_other_cluster = get_distances_between_trajectories_and_clusters(kmeans.labels_,
                                                                                                             kmeans.cluster_centers_,
                                                                                                             data,
                                                                                                             verbose=False,
                                                                                                             plot=False)
-        print("Distances seconds: ", time.time() - start)
-        start = time.time()
+
+        if np.isnan(distance_to_my_cluster).any():
+            print("Distance my cluster contains nan")
+            print(distance_to_my_cluster)
+        if np.isnan(distance_to_other_cluster).any():
+            print("Distance other cluster contains nan")
+            print(distance_to_other_cluster)
+
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
-        print("NP Mean seconds: ", time.time() - start)
-        start = time.time()
+
         # change_in_distance_to_my_cluster, change_in_distance_to_other_cluster = get_change_in_distance(distance_to_my_cluster, distance_to_other_cluster)
 
 
         # normalize distances
         distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
         distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
-        print("Norm distances seconds: ", time.time() - start)
-        start = time.time()
+        if np.isnan(distance_to_my_cluster).any():
+            print("normed Distance my cluster contains nan")
+            print(distance_to_my_cluster)
+        if np.isnan(distance_to_other_cluster).any():
+            print("normed Distance other cluster contains nan")
+            print(distance_to_other_cluster)
         # create reward
         # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
         ## TEST: run this with only the distance to the other cluster
         reward = 3 * distance_to_other_cluster - distance_to_my_cluster
-
+        if np.isnan(reward).any():
+            print("reward contains nan")
+            print(reward)
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards[1])
         n_episodes = int(reward.shape[0]/n_envs)
         restacked_reward = [reward[n_envs * i: n_envs * (i+1)] for i in range(n_episodes)]
         reshaped_reward = np.transpose(np.concatenate(restacked_reward, axis = 1))
         self.rollout_buffer.rewards = reshaped_reward
-        print("Cleanup  seconds: ", time.time() - start)
-        start = time.time()
+
         return mean_distance_to_my_cluster, mean_distance_to_other_cluster
 
          #return kmeans.inertia_ , compute_distance_between_trajectory_and_cluster(kmeans.cluster_centers_[0], kmeans.cluster_centers_[1])
