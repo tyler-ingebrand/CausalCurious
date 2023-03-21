@@ -31,7 +31,7 @@ if __name__ == '__main__':
     assert change_shape or change_size or change_mass
     torch.manual_seed(seed)
     numpy.random.seed(seed)
-    exp_dir = "{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
+    exp_dir = "ppo_{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
     # Get causal world environment. second half are cube, first half are sphere
@@ -46,7 +46,7 @@ if __name__ == '__main__':
                               seed=seed + rank,
                               max_episode_length=249,
                               skip_frame=10,
-                              action_mode='end_effector_positions'
+                              # action_mode='end_effector_positions'
                               )
             # random_intervention_dict = env.do_intervention(
             #       {'tool_block': {"initial_position":[0,0,0.2]}},

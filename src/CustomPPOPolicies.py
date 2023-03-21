@@ -661,6 +661,9 @@ class ActorCriticPolicy(BasePolicy):
         :param latent_pi: Latent code for the actor
         :return: Action distribution
         """
+        if torch.isnan(latent_pi).any():
+            print("latent_pi nan")
+            print(latent_pi)
         mean_actions = self.action_net(latent_pi)
 
         if torch.isnan(mean_actions).any():
@@ -707,13 +710,39 @@ class ActorCriticPolicy(BasePolicy):
             and entropy of the action distribution.
         """
         # Preprocess the observation if needed
+
         features = self.extract_features(obs)
+        if torch.isnan(obs).any():
+            print("obs nan")
+            print(obs)
+        if torch.isnan(features).any():
+            print("features nan")
+            print(features)
         if self.share_features_extractor:
             latent_pi, latent_vf = self.mlp_extractor(features)
         else:
             pi_features, vf_features = features
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
+        if torch.isnan(latent_pi).any():
+            for layer in self.mlp_extractor.shared_net:
+                try:
+                    print(layer.weight, layer.bias)
+                except:
+                    continue
+            for layer in self.mlp_extractor.policy_net:
+                try:
+                    print(layer.weight, layer.bias)
+                except:
+                    continue
+            for layer in self.mlp_extractor.value_net:
+                try:
+                    print(layer.weight, layer.bias)
+                except:
+                    continue
+            print("latent_pi nan")
+            print(latent_pi)
+
         distribution = self._get_action_dist_from_latent(latent_pi)
         log_prob = distribution.log_prob(actions)
         values = self.value_net(latent_vf)

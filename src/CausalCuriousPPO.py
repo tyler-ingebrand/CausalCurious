@@ -18,7 +18,7 @@ from .clustering_functions import cluster, format_obs, compute_distance_between_
     get_distances_between_trajectories_and_clusters, normalize_distances, get_change_in_distance
 
 import time
-from .CustomPolicies import *
+from .CustomPPOPolicies import *
 
 
 SelfCausalCuriousPPO = TypeVar("SelfCausalCuriousPPO", bound="CausalCuriousPPO")
@@ -309,26 +309,42 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                     self.policy.reset_noise(self.batch_size)
 
                 values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                if torch.isnan(log_prob).any():
+                    print("Log prob nan")
+                    print(log_prob)
+                if torch.isnan(values).any():
+                    print("values nan")
+                    print(values)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
                 # Normalization does not make sense if mini batchsize == 1, see GH issue #325
                 if self.normalize_advantage and len(advantages) > 1:
                     advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                if torch.isnan(advantages).any():
+                    print("advantages nan")
+                    print(advantages)
 
                 # ratio between old and new policy, should be one at the first iteration
                 ratio = th.exp(log_prob - rollout_data.old_log_prob)
-
+                if torch.isnan(ratio).any():
+                    print("ratio nan")
+                    print(ratio)
                 # clipped surrogate loss
                 policy_loss_1 = advantages * ratio
                 policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
                 policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
-
+                if torch.isnan(policy_loss).any():
+                    print("policy_loss nan")
+                    print(policy_loss)
                 # Logging
                 pg_losses.append(policy_loss.item())
                 clip_fraction = th.mean((th.abs(ratio - 1) > clip_range).float()).item()
                 clip_fractions.append(clip_fraction)
 
+                if torch.isnan(values).any():
+                    print("values nan")
+                    print(values)
                 if self.clip_range_vf is None:
                     # No clipping
                     values_pred = values
@@ -338,8 +354,17 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
                     values_pred = rollout_data.old_values + th.clamp(
                         values - rollout_data.old_values, -clip_range_vf, clip_range_vf
                     )
+                if torch.isnan(rollout_data.old_values).any():
+                        print("rollout_data.old_values nan")
+                        print(rollout_data.old_values)
                 # Value loss using the TD(gae_lambda) target
                 value_loss = F.mse_loss(rollout_data.returns, values_pred)
+                if torch.isnan(rollout_data.returns).any():
+                        print("(rollout_data.returns nan")
+                        print(rollout_data.returns)
+                if torch.isnan(value_loss).any():
+                        print("value_loss nan")
+                        print(value_loss)
                 value_losses.append(value_loss.item())
 
                 # Entropy loss favor exploration
@@ -351,7 +376,11 @@ class CausalCuriousPPO(OnPolicyAlgorithm):
 
                 entropy_losses.append(entropy_loss.item())
 
-                loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
+                if torch.isnan(entropy_loss).any():
+                        print("entropy_loss nan")
+                        print(entropy_loss)
+                #loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
+                loss = policy_loss +  self.vf_coef * value_loss
 
                 # Calculate approximate form of reverse KL Divergence for early stopping
                 # see issue #417: https://github.com/DLR-RM/stable-baselines3/issues/417
