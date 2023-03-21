@@ -13,9 +13,11 @@ print("\t", X.shape[0], " trajectories of length ", X.shape[1], " with ", X.shap
 
 # run clustering alg
 start = time.time()
-km = TimeSeriesKMeans(n_clusters=3, metric="dtw", max_iter=5, max_iter_barycenter=5, random_state=0, n_jobs=os.cpu_count()).fit(X)
+
+n_jobs = -1
+km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", max_iter=5, max_iter_barycenter=5, random_state=0, n_jobs=n_jobs).fit(X)
+
 print("Time = ", time.time() - start)
-err
 # km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", max_iter=5, random_state=0).fit(X)
 print("Clusters: ", km.cluster_centers_.shape)
 print("\t", km.cluster_centers_.shape[0], " clusters of length ", km.cluster_centers_.shape[1], " with ", km.cluster_centers_.shape[2], " dimensions")
