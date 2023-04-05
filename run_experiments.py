@@ -13,20 +13,21 @@ if __name__ == "__main__":
              {"change_shape": False, "change_mass": True, "change_size": False},
              {"change_shape": False, "change_mass": False, "change_size": True}
              ]
-    multi_process = True
-    max_processes_at_once = 3
+    multi_process = False
+    max_processes_at_once = 1
+    randomness = 0.005
     os.makedirs("results", exist_ok=True)
 
     if not multi_process:
         for b in bools:
              for s in range(seeds):
-                 test(s, n_envs, number_steps, b["change_shape"], b["change_size"], b["change_mass"])
+                 test(s, n_envs, number_steps, b["change_shape"], b["change_size"], b["change_mass"], randomness)
 
     else:
         args = []
         for b in bools:
             for s in range(seeds):
-                this_arg = (s, n_envs, number_steps, b["change_shape"], b["change_size"], b["change_mass"])
+                this_arg = (s, n_envs, number_steps, b["change_shape"], b["change_size"], b["change_mass"], randomness)
                 args.append(this_arg)
 
         while len(args) > 0:

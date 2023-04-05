@@ -4,6 +4,8 @@ import numpy
 import torch
 from causal_world.envs import CausalWorld
 from causal_world.task_generators import generate_task
+from gym.wrappers import TransformObservation
+from gym.spaces import Box
 from pybullet_utils.util import set_global_seeds
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
@@ -13,6 +15,32 @@ from stable_baselines3.common.env_util import make_vec_env
 from moviepy.editor import *
 import os
 import pickle
+
+
+from gym import ObservationWrapper, ActionWrapper
+
+
+class Transform32(ObservationWrapper, ActionWrapper):
+    def __init__(self, env):
+        super(Transform32, self).__init__(env)
+        self.transform_state = lambda s: np.float32(s)
+        self.transform_action = lambda a: np.float64(a)
+        self.transform_action_reverse = lambda a: np.float32(a)
+        self.observation_space = Box(np.float32(env.observation_space.low),
+                                     np.float32(env.observation_space.high))
+        self.action_space = Box(np.float32(env.action_space.low),
+                                np.float32(env.action_space.high))
+        self._max_episode_length = env._max_episode_length
+
+    def observation(self, observation):
+        return self.transform_state(observation)
+
+    def action(self, action):
+        return self.transform_action(action)
+
+    def reverse_action(self, action):
+        return self.transform_action_reverse(action)
+
 
 # For Sophia, in the event I forget how to activate my virtual environment:  source /path/to/venv/bin/activate
 def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass, initial_state_randomness=0.005):
@@ -54,9 +82,8 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
             random_offset = (b - a) * numpy.random.random_sample() + a
             env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'] += random_offset
 
-
-            #print(env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'])
-            #print(env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_orientation'])
+            # get rid of float64
+            env = Transform32(env)
             return env
 
         set_global_seeds(seed)
