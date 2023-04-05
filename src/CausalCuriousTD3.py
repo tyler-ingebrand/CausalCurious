@@ -170,13 +170,13 @@ class CausalTD3(OffPolicyAlgorithm):
 
 
     def record_success_rates(self, labels):
-        print(labels)
+        # print(labels)
         guess_0, guess_1 = np.zeros(len(labels)), np.zeros(len(labels))
         guess_0[:len(labels)//2] = 1
         guess_1[len(labels)//2:] = 1
         error_0 = sum(labels == guess_0)/len(labels)
         error_1 = sum(labels == guess_1)/len(labels)
-        print("Success rate: ", max(error_0, error_1))
+        # print("Success rate: ", max(error_0, error_1))
         self.success_rates.append(max(error_0, error_1))
 
     def generate_synthetic_reward(self):
