@@ -97,7 +97,10 @@ class CausalTD3(OffPolicyAlgorithm):
     ):
         number_envs = 32
         train_freq = (episode_length ,"step")
-        buffer_size = episode_length * number_envs
+        # buffer_size = episode_length * number_envs
+        # buffer_size = 100_000
+        buffer_size = number_envs * episode_length * 15
+        self.recent_steps = episode_length
 
 
         super().__init__(
@@ -185,7 +188,11 @@ class CausalTD3(OffPolicyAlgorithm):
 
         # get obs data. Remove robot states since we dont care about those for clyustering
         # Robot obs are the first 27 dims in statespace
-        obs = buffer.observations[:, :, 27:]
+        end = buffer.pos if buffer.pos != 0 else buffer.observations.shape[0]
+        start = end - self.recent_steps
+        obs = buffer.observations[start : end, :, 27:]
+        print(f"start = {start}, end = {end}")
+        print(obs.shape, "buffer pos = ", buffer.pos, ", recent steps = ", self.recent_steps, "querying from ", buffer.pos - self.recent_steps, " to ", buffer.pos)
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
@@ -237,7 +244,7 @@ class CausalTD3(OffPolicyAlgorithm):
         # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
         ## TEST: run this with only the distance to the other cluster
         # reward = 3 * distance_to_other_cluster - distance_to_my_cluster
-        reward = distance_to_other_cluster 
+        reward = distance_to_other_cluster  - distance_to_my_cluster
         if np.isnan(reward).any():
             print("reward contains nan")
             print(reward)
@@ -246,7 +253,7 @@ class CausalTD3(OffPolicyAlgorithm):
         n_episodes = int(reward.shape[0]/n_envs) 
         restacked_reward = [reward[n_envs * i: n_envs * (i+1)] for i in range(n_episodes)]
         reshaped_reward = np.transpose(np.concatenate(restacked_reward, axis = 1))
-        self.replay_buffer.rewards = reshaped_reward
+        self.replay_buffer.rewards[start:end, :] = reshaped_reward
 
         return mean_distance_to_my_cluster, mean_distance_to_other_cluster
 
@@ -328,7 +335,7 @@ class CausalTD3(OffPolicyAlgorithm):
         if len(actor_losses) > 0:
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
-        self.replay_buffer.reset()
+        # self.replay_buffer.reset()
 
     def learn(
         self: SelfCausalTD3,

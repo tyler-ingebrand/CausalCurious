@@ -12,23 +12,16 @@ from src.CausalCuriousTD3 import *
 from stable_baselines3.common.env_util import make_vec_env
 from moviepy.editor import *
 import os
+import pickle
 
 # For Sophia, in the event I forget how to activate my virtual environment:  source /path/to/venv/bin/activate
-if __name__ == '__main__':
-
-    # parameters ##
-    seed = 1
-    number_envs = 32
-    episodes_per_update = 1
-    total_timesteps =   300_000
-    change_shape = True
-    change_size = False
-    change_mass = False
-    # separation_only = False # you have to go in and actually change the reward 
-    ###############
-
+def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass):
 
     assert change_shape or change_size or change_mass
+    print(f"Testing TD3 on {number_envs} envs for {total_timesteps} steps."
+          f" Varying {'shape' if change_shape else ''},"
+          f"{'mass' if change_mass else ''}"
+          f"{'size' if change_size else ''} on seed {seed}")
     torch.manual_seed(seed)
     numpy.random.seed(seed)
     exp_dir = "td3_{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
@@ -98,6 +91,14 @@ if __name__ == '__main__':
     plt.savefig("results/{}/properties.png".format(exp_dir), dpi=300, bbox_inches='tight')
     plt.clf()
 
+    # make a pickel
+    pickle.dump({"timesteps": model.timesteps,
+                 "mean_distance_my_cluster": model.mean_distance_my_cluster,
+                 "mean_distance_other_cluster": model.mean_distance_other_cluster,
+                 "success_rates": model.success_rates
+                 },
+                open(f"results/{exp_dir}/data.pkl", 'wb'))
+
     # show episode, save
     seconds_per_frame = 0.1
     base_file_name = "experiment"
@@ -116,3 +117,14 @@ if __name__ == '__main__':
         del images
         del video
 
+if __name__ == '__main__':
+
+    # parameters ##
+    seed = 1
+    number_envs = 32
+    episodes_per_update = 1
+    total_timesteps =   300_000
+    change_shape = False
+    change_size = False
+    change_mass = True
+    test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass)
