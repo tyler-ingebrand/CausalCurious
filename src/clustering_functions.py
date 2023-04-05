@@ -38,8 +38,8 @@ def cluster(data,
             debug_dir=None):
     assert distance_metric == "softdtw" or distance_metric == "euclidean", "Distance metric must be one of 'euclidean' or 'softdtw', got {}".format(distance_metric)
     plt.rcParams["figure.figsize"] = (3.5*5, 3.5*4)
-    if verbose: print("Data: ", data.shape)
-    print("\t", data.shape[0], " trajectories of length ", data.shape[1], " with ", data.shape[2], " dimensions")
+    if verbose:
+        print("\t", data.shape[0], " trajectories of length ", data.shape[1], " with ", data.shape[2], " dimensions")
 
     # run clustering alg
     km = TimeSeriesKMeans(n_clusters=n_clusters,

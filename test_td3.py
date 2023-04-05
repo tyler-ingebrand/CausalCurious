@@ -67,10 +67,10 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
     model = CausalTD3("MlpPolicy", env,
                              train_freq=(1, "episode"),
                              episode_length=env.get_attr("_max_episode_length", [0])[0] + 1, # this env returns the index of last step, we want total number of steps
-                             verbose=1,
+                             verbose=0,
                              debug_dir = "results/{}".format(exp_dir) )
 
-    model.learn(total_timesteps=total_timesteps)
+    model.learn(total_timesteps=total_timesteps, progress_bar=True)
 
 
 

@@ -191,8 +191,8 @@ class CausalTD3(OffPolicyAlgorithm):
         end = buffer.pos if buffer.pos != 0 else buffer.observations.shape[0]
         start = end - self.recent_steps
         obs = buffer.observations[start : end, :, 27:]
-        print(f"start = {start}, end = {end}")
-        print(obs.shape, "buffer pos = ", buffer.pos, ", recent steps = ", self.recent_steps, "querying from ", buffer.pos - self.recent_steps, " to ", buffer.pos)
+        # print(f"start = {start}, end = {end}")
+        # print(obs.shape, "buffer pos = ", buffer.pos, ", recent steps = ", self.recent_steps, "querying from ", buffer.pos - self.recent_steps, " to ", buffer.pos)
 
         # Reorder state information, need it to be n_trajectories x n_timesteps x dimensions
         # reformat obs for clustering alg. Is n_trajs X n_timesteps X dimension of state space
@@ -218,13 +218,6 @@ class CausalTD3(OffPolicyAlgorithm):
                                                                                                             verbose=False,
                                                                                                             plot=False)
 
-        if np.isnan(distance_to_my_cluster).any():
-            print("Distance my cluster contains nan")
-            print(distance_to_my_cluster)
-        if np.isnan(distance_to_other_cluster).any():
-            print("Distance other cluster contains nan")
-            print(distance_to_other_cluster)
-
         mean_distance_to_my_cluster = np.mean(distance_to_my_cluster)
         mean_distance_to_other_cluster = np.mean(distance_to_other_cluster)
 
@@ -234,20 +227,14 @@ class CausalTD3(OffPolicyAlgorithm):
         # normalize distances
         #distance_to_my_cluster = normalize_distances(distance_to_my_cluster)
         #distance_to_other_cluster = normalize_distances(distance_to_other_cluster)
-        if np.isnan(distance_to_my_cluster).any():
-            print("normed Distance my cluster contains nan")
-            print(distance_to_my_cluster)
-        if np.isnan(distance_to_other_cluster).any():
-            print("normed Distance other cluster contains nan")
-            print(distance_to_other_cluster)
+
+
         # create reward
         # reward = 2 * distance_to_other_cluster - distance_to_my_cluster
         ## TEST: run this with only the distance to the other cluster
         # reward = 3 * distance_to_other_cluster - distance_to_my_cluster
         reward = distance_to_other_cluster  - distance_to_my_cluster
-        if np.isnan(reward).any():
-            print("reward contains nan")
-            print(reward)
+
         # assign reward to respective timesteps
         n_envs = len(buffer.rewards[1])
         n_episodes = int(reward.shape[0]/n_envs) 
