@@ -6,13 +6,14 @@ import numpy as np
 
 class MyOwnTask(BaseTask):
 
-    def __init__(self, shape="Cube", mass="Heavy", size="Big", **kwargs):
+    def __init__(self, shape="Cube", mass="Heavy", size="Big", randomness=0.005, **kwargs):
         assert shape == 'Cube' or shape == 'Sphere', "Shape must be one of 'Cube' or 'Sphere', got {}".format(shape)
         assert mass == 'Heavy' or mass == 'Light', "Mass must be one of 'Heavy' or 'Light', got {}".format(mass)
         assert size == 'Big' or size == 'Small', "Size must be one of 'Big' or 'Small', got {}".format(size)
         self.shape = shape
         self.size = size
         self.mass = mass
+        self.randomness = randomness
         super().__init__(task_name="new_task",
                          variables_space='space_a_b',
                          fractional_reward_weight=1,
@@ -91,8 +92,7 @@ class MyOwnTask(BaseTask):
         """
         self.reset_default_state()
         #print(self._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'])
-        a, b = -0.005, 0.005 # this one works but is maybe too easy
-        # a, b = -0.02, 0.02 # this one works but is maybe too easy
+        a, b = -self.randomness, self.randomness # this one works but is maybe too easy
         random_offset = (b - a) * np.random.random_sample((3,)) + a
         self._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'] += random_offset
         #print(self._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'])

@@ -13,10 +13,7 @@ total_timesteps = 300000
 pickle_name = "data.pkl"
 
 # find file location
-s1 = "change_shape_" if change_shape else ""
-s2 = "change_size_" if change_size else ""
-s3 = "change_mass_" if change_mass else ""
-dir = f"{results_dir}/{alg}_{s1}{s2}{s3}seed_{seed}_steps_{total_timesteps}"
+dir = f"{results_dir}/{alg}_{'change_shape_' if change_shape else ''}{'change_size_' if change_size else ''}{'change_mass_' if change_mass else ''}seed_{seed}_steps_{total_timesteps}"
 file = f"{dir}/{pickle_name}"
 
 # open file

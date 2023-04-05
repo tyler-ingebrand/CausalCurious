@@ -15,16 +15,17 @@ import os
 import pickle
 
 # For Sophia, in the event I forget how to activate my virtual environment:  source /path/to/venv/bin/activate
-def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass):
+def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass, initial_state_randomness=0.005):
 
     assert change_shape or change_size or change_mass
-    print(f"Testing TD3 on {number_envs} envs for {total_timesteps} steps."
-          f" Varying {'shape' if change_shape else ''},"
-          f"{'mass' if change_mass else ''}"
-          f"{'size' if change_size else ''} on seed {seed}")
+    print(f"Testing TD3 on {number_envs} envs for {total_timesteps} steps.\n"
+          f"Varying {'shape ' if change_shape else ''}"
+          f"{'mass ' if change_mass else ''}"
+          f"{'size ' if change_size else ''}on seed {seed}.\n"
+          f"S_0 noise = {initial_state_randomness}")
     torch.manual_seed(seed)
     numpy.random.seed(seed)
-    exp_dir = "td3_{}{}{}seed_{}_steps_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps)
+    exp_dir = "td3_{}{}{}seed_{}_steps_{}_random_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps, initial_state_randomness)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
     # Get causal world environment. second half are cube, first half are sphere
@@ -33,7 +34,8 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
         def _init():
             task = MyOwnTask(shape="Sphere" if rank < number_envs/2 and change_shape else "Cube",
                              size="Small" if rank < number_envs/2  and change_size else "Big",
-                             mass="Light" if rank < number_envs/2 and change_mass else "Heavy")
+                             mass="Light" if rank < number_envs/2 and change_mass else "Heavy",
+                             randomness=initial_state_randomness)
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
@@ -47,8 +49,8 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
             # )
             # print(random_intervention_dict)
 
-            a = -0.005
-            b = 0.005
+            a = -initial_state_randomness
+            b = initial_state_randomness
             random_offset = (b - a) * numpy.random.random_sample() + a
             env._task._current_starting_state['stage_object_state']['rigid_objects'][0][1]['initial_position'] += random_offset
 
@@ -127,4 +129,5 @@ if __name__ == '__main__':
     change_shape = False
     change_size = False
     change_mass = True
-    test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass)
+    random = 0.005
+    test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random)
