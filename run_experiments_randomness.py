@@ -10,29 +10,26 @@ if __name__ == "__main__":
     n_envs = 32
     seeds = 5
     number_steps= 300_000
-    bools = [{"change_shape": True, "change_mass": False, "change_size": False},
-             {"change_shape": False, "change_mass": True, "change_size": False},
-             {"change_shape": False, "change_mass": False, "change_size": True}
-             ]
+    bools = {"change_shape": True, "change_mass": False, "change_size": False}
+    randoms = [0.0001, 0.0005,  0.001, 0.01, 0.05,  0.1]
     multi_process = False
     max_processes_at_once = 1
-    randomness = 0.005
     os.makedirs("results", exist_ok=True)
 
     if not multi_process:
-        for b in bools:
+        for randomness in randoms:
              for s in range(seeds):
                  subprocess.run(
                                 f"..\\venv\\Scripts\\python.exe ./test_td3.py "
                                 f"--seed {s} "
                                 f"--number_envs {n_envs} "
                                 f"--total_timesteps {number_steps} "
-                                f"--change_size {'True' if b['change_size'] else 'False'} "
-                                f"--change_mass {'True' if b['change_mass'] else 'False'} "
-                                f"--change_shape {'True' if b['change_shape'] else 'False'} ",
+                                f"--change_size {'True' if bools['change_size'] else 'False'} "
+                                f"--change_mass {'True' if bools['change_mass'] else 'False'} "
+                                f"--change_shape {'True' if bools['change_shape'] else 'False'} "
+                                f"--random {randomness}",
                                 shell=True
                                 )
                  # test(s, n_envs, number_steps, b["change_shape"], b["change_size"], b["change_mass"], randomness)
-
 
     print("\n\n\n\n\n\n\nAll done")
