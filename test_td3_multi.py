@@ -43,7 +43,7 @@ class Transform32(ObservationWrapper, ActionWrapper):
 
 
 # For Sophia, in the event I forget how to activate my virtual environment:  source /path/to/venv/bin/activate
-def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass, initial_state_randomness=0.005):
+def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_mass, initial_state_randomness=0.005, multi = False):
 
     assert change_shape or change_size or change_mass
     print(f"Testing TD3 on {number_envs} envs for {total_timesteps} steps.\n"
@@ -53,18 +53,40 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
           f"S_0 noise = {initial_state_randomness}")
     torch.manual_seed(seed)
     numpy.random.seed(seed)
-    exp_dir = "td3_{}{}{}seed_{}_steps_{}_random_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps, initial_state_randomness)
+    exp_dir = "td3_multi_{}{}{}seed_{}_steps_{}_random_{}".format( "change_shape_" if change_shape else "", "change_size_" if change_size else "", "change_mass_" if change_mass else "", seed, total_timesteps, initial_state_randomness)
     os.makedirs("results/{}".format(exp_dir), exist_ok=True)
 
     # Get causal world environment. second half are cube, first half are sphere
     # things we can compare: weight heavy vs light, shape cube vs sphere, size big vs small? 
-   
-    def _make_env(rank):
+    def _make_multi_env(rank):
+        if change_mass and change_shape and change_size: 
+            raise ValueError("can only have at most 2 true" )
         def _init():
-            task = MyOwnTask(shape="Sphere" if rank < number_envs/2 and change_shape else "Cube",
-                             size="Small" if rank < number_envs/2  and change_size else "Big",
-                             mass="Light" if rank < number_envs/2 and change_mass else "Heavy",
-                             randomness=initial_state_randomness)
+            if change_shape and change_size: 
+                task = MyOwnTask(shape = "Sphere" if rank < number_envs/2  else "Cube",
+                                size = "Small" if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
+                                mass = "Light",
+                                randomness = initial_state_randomness)
+
+            if change_mass and change_size: 
+                task = MyOwnTask(shape = "Cube", #"Sphere" if rank < number_envs/2  else "Cube",
+                                size = "Small" if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
+                                mass = "Light" if rank < number_envs/2  else "Heavy",
+                                randomness = initial_state_randomness)
+
+            elif change_mass and change_shape: 
+                task = MyOwnTask(shape = "Sphere" if rank < number_envs/2  else "Cube",
+                                size = "Small",  #if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
+                                mass = "Light" if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Heavy",
+                                randomness = initial_state_randomness)
+            elif change_shape and change_size: 
+                task = MyOwnTask(shape = "Sphere" if rank < number_envs/2  else "Cube",
+                                size = "Small" if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
+                                mass = "Light",
+                                randomness = initial_state_randomness)
+            else: 
+                raise ValueError("need at least two qualities true for a multi environement")
+
             env = CausalWorld(task=task,
                               enable_visualization=False,
                               seed=seed + rank,
@@ -86,11 +108,13 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
             # get rid of float64
             env = Transform32(env)
             return env
-
         set_global_seeds(seed)
         return _init
 
-    env = SubprocVecEnv([_make_env(i) for i in range(number_envs)])
+    
+
+    env = SubprocVecEnv([_make_multi_env(i) for i in range(number_envs)])
+ 
 
 
     # train
@@ -155,8 +179,8 @@ if __name__ == '__main__':
     number_envs = 32
     episodes_per_update = 1
     total_timesteps =  300_000
-    change_shape = False
+    change_shape = True
     change_size = False
     change_mass = True
     random = 0.005
-    test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random)
+    test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random, multi= True)
