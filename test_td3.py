@@ -15,7 +15,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from moviepy.editor import *
 import os
 import pickle
-
+import argparse
 
 from gym import ObservationWrapper, ActionWrapper
 
@@ -131,32 +131,45 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
                 open(f"results/{exp_dir}/data.pkl", 'wb'))
 
     # show episode, save
-    seconds_per_frame = 0.1
-    base_file_name = "experiment"
-    for episode in range(10):
-        images = []
-        done = False
-        obs = env.reset()
-        for t in range(100):
-            action, _states = model.predict(obs)
-            obs, rewards, dones, info = env.step(action)
-            frame = env.render(mode='rgb_array')
-            images.append(ImageClip(frame).set_duration(seconds_per_frame))
-            done = dones.any()
-        video = concatenate(images, method="compose")
-        video.write_videofile("results/{}/{}_episode_{}.mp4".format( exp_dir, base_file_name, episode), fps=24)
-        del images
-        del video
+    # seconds_per_frame = 0.1
+    # base_file_name = "experiment"
+    # for episode in range(2):
+    #     images = []
+    #     done = False
+    #     obs = env.reset()
+    #     for t in range(100):
+    #         action, _states = model.predict(obs)
+    #         obs, rewards, dones, info = env.step(action)
+    #         frame = env.render(mode='rgb_array')
+    #         images.append(ImageClip(frame).set_duration(seconds_per_frame))
+    #         done = dones.any()
+    #     video = concatenate(images, method="compose")
+    #     video.write_videofile("results/{}/{}_episode_{}.mp4".format( exp_dir, base_file_name, episode), fps=24)
+    #     video.close()
+    #     del images
+    #     del video
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description='Test td3.')
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--number_envs', type=int, default=32)
+    parser.add_argument('--total_timesteps', type=int, default=300_000)
+    parser.add_argument('--change_size', type=str, default="False")
+    parser.add_argument('--change_shape', type=str, default="True")
+    parser.add_argument('--change_mass', type=str, default="False")
+    parser.add_argument('--random', type=float, default=0.005)
+
+
+    args = parser.parse_args()
+
     # parameters ##
-    seed = 1
-    number_envs = 32
+    seed = args.seed
+    number_envs = args.number_envs
     episodes_per_update = 1
-    total_timesteps =  300_000
-    change_shape = False
-    change_size = False
-    change_mass = True
-    random = 0.005
+    total_timesteps = args.total_timesteps
+    change_shape = True if args.change_shape == "True" else False if args.change_shape == "False" else Exception()
+    change_size = True if args.change_size == "True" else False if args.change_size == "False" else Exception()
+    change_mass = True if args.change_mass == "True" else False if args.change_mass == "False" else Exception()
+    random = args.random
     test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random)

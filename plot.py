@@ -5,15 +5,22 @@ import pickle
 
 results_dir = "results"
 alg = "td3"
-change_shape = False
+change_shape = True
 change_size = False
-change_mass = True
-seed = 1
+change_mass = False
+seed = 4
 total_timesteps = 300000
+random = 0.005
 pickle_name = "data.pkl"
 
 # find file location
-dir = f"{results_dir}/{alg}_{'change_shape_' if change_shape else ''}{'change_size_' if change_size else ''}{'change_mass_' if change_mass else ''}seed_{seed}_steps_{total_timesteps}"
+dir = f"{results_dir}/{alg}" \
+      f"_{'change_shape_' if change_shape else ''}" \
+      f"{'change_size_' if change_size else ''}" \
+      f"{'change_mass_' if change_mass else ''}" \
+      f"seed_{seed}_" \
+      f"steps_{total_timesteps}_" \
+      f"random_{random}"
 file = f"{dir}/{pickle_name}"
 
 # open file
