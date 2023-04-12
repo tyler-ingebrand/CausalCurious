@@ -93,7 +93,7 @@ class CausalTD3(OffPolicyAlgorithm):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
-        debug_dir=None,
+        debug_dir=None, multi= False,
     ):
         number_envs = 32
         train_freq = (episode_length ,"step")
@@ -101,7 +101,7 @@ class CausalTD3(OffPolicyAlgorithm):
         # buffer_size = 100_000
         buffer_size = number_envs * episode_length * 15
         self.recent_steps = episode_length
-
+        self.multi= multi
 
         super().__init__(
             policy,
@@ -140,7 +140,7 @@ class CausalTD3(OffPolicyAlgorithm):
         self.timesteps = []
         self.debug_dir = debug_dir
         self.episode_starts = []
-        self.success_rates = []
+        self.success_rates = [] #TODO: Here
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -168,6 +168,41 @@ class CausalTD3(OffPolicyAlgorithm):
         self.episode_starts.append(0)  # append the length of the buffer so we have a marker at the start and end of each episode
         self.episode_starts.append(len(buffer.dones))  # append the length of the buffer so we have a marker at the start and end of each episode
 
+
+    def record_success_rates_multi(self, labels):
+        num_items = len(labels)
+        group_averages = []
+
+        group_1_counter = [0,0]
+        num_group_1 = 0
+        group_2_counter = [0, 0]
+        num_group_2 = 0
+        group_3_counter = [0,0]
+        num_group_3 = 0
+        group_4_counter = [0,0]
+        num_group_4 = 0
+
+        for i in range(len(labels)):
+            if i < num_items / 4:
+                group_1_counter[labels[i]] += 1
+                num_group_1 += 1
+            elif i >= num_items/4 and i < num_items/2:
+                group_2_counter[labels[i]] += 1
+                num_group_2 += 1
+            elif i>= num_items/2  and i < 3*num_items/4:
+                group_3_counter[labels[i]] += 1
+                num_group_3 += 1
+            else:
+                group_4_counter[labels[i]] += 1
+                num_group_4 += 1
+
+        group_1_avg = max(group_1_counter)/num_group_1
+        group_2_avg = max(group_2_counter)/num_group_2
+        group_3_avg = max(group_3_counter)/num_group_3
+        group_4_avg = max(group_4_counter)/num_group_4
+
+        self.success_rates.append( (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4)
+        # return (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4
 
     def record_success_rates(self, labels):
         # print(labels)
@@ -207,8 +242,10 @@ class CausalTD3(OffPolicyAlgorithm):
                         verbose = False,
                         timestep=self.num_timesteps,
                         debug_dir=self.debug_dir)
-
-        self.record_success_rates(kmeans.labels_)
+        if self.multi == False: 
+            self.record_success_rates(kmeans.labels_)
+        else:
+            self.record_success_rates_multi(kmeans.labels_)
 
 
         # compute distances between current cluster and other cluster
