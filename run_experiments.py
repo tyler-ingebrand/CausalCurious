@@ -10,9 +10,9 @@ if __name__ == "__main__":
     n_envs = 32
     seeds = 5
     number_steps= 300_000
-    bools = [{"change_shape": True, "change_mass": False, "change_size": False},
+    bools = [# {"change_shape": True, "change_mass": False, "change_size": False},
              {"change_shape": False, "change_mass": True, "change_size": False},
-             {"change_shape": False, "change_mass": False, "change_size": True}
+             # {"change_shape": False, "change_mass": False, "change_size": True}
              ]
     multi_process = False
     max_processes_at_once = 1

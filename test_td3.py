@@ -69,7 +69,7 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
                               seed=seed + rank,
                               max_episode_length=249,
                               skip_frame=10,
-                              # action_mode='end_effector_positions'
+                              action_mode='joint_torques', # 'end_effector_positions'
                               )
             # random_intervention_dict = env.do_intervention(
             #       {'tool_block': {"initial_position":[0,0,0.2]}},
