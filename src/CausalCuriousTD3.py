@@ -14,7 +14,7 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.utils import get_parameters_by_name, polyak_update
 from .CustomTD3Policies import *
 from .clustering_functions import *
-
+import itertools 
 SelfCausalTD3 = TypeVar("SelfCausalTD3", bound="CausalTD3")
 
 
@@ -170,42 +170,71 @@ class CausalTD3(OffPolicyAlgorithm):
 
 
     def record_success_rates_multi(self, labels):
-        num_items = len(labels)
-        group_averages = []
+        combos = list(itertools.product([0, 1], repeat=4))
+        # combos is a list that looks like [ (0,0,0,0), (0,0,0,1), ... , (1,1,1,1)]
+        combos.remove((1,1,1,1))
+        combos.remove((0,0,0,0))
 
-        group_1_counter = [0,0]
-        num_group_1 = 0
-        group_2_counter = [0, 0]
-        num_group_2 = 0
-        group_3_counter = [0,0]
-        num_group_3 = 0
-        group_4_counter = [0,0]
-        num_group_4 = 0
+        guess_errors = []
+        for combo in combos:
+            guess = np.array([])
+            for i in combo:
+                next_four = np.full(8, i, dtype=np.long)
+                guess = np.insert(guess, len(guess), next_four)
+            # guess will now look like # [0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0] for combo (0,1,0,0)
+            #calculate error in the same way as before
+            error = sum(labels == guess)/len(labels)
+            guess_errors.append(error)
 
-        for i in range(len(labels)):
-            if i < num_items / 4:
-                group_1_counter[labels[i]] += 1
-                num_group_1 += 1
-            elif i >= num_items/4 and i < num_items/2:
-                group_2_counter[labels[i]] += 1
-                num_group_2 += 1
-            elif i>= num_items/2  and i < 3*num_items/4:
-                group_3_counter[labels[i]] += 1
-                num_group_3 += 1
-            else:
-                group_4_counter[labels[i]] += 1
-                num_group_4 += 1
+        # record biggest error
+        self.success_rates.append(max(guess_errors))
+        
 
-        group_1_avg = max(group_1_counter)/num_group_1
-        group_2_avg = max(group_2_counter)/num_group_2
-        group_3_avg = max(group_3_counter)/num_group_3
-        group_4_avg = max(group_4_counter)/num_group_4
-        print(max(range(len(group_1_counter)), key=group_1_counter.__getitem__),
-              max(range(len(group_2_counter)), key=group_2_counter.__getitem__),
-              max(range(len(group_3_counter)), key=group_3_counter.__getitem__),
-              max(range(len(group_4_counter)), key=group_4_counter.__getitem__),)
-        self.success_rates.append( (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4)
-        # return (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4
+        # group_1_avg = max(group_1_counter)/num_group_1
+        # group_2_avg = max(group_2_counter)/num_group_2
+        # group_3_avg = max(group_3_counter)/num_group_3
+        # group_4_avg = max(group_4_counter)/num_group_4
+        # print(max(range(len(group_1_counter)), key=group_1_counter.__getitem__),
+        #       max(range(len(group_2_counter)), key=group_2_counter.__getitem__),
+        #       max(range(len(group_3_counter)), key=group_3_counter.__getitem__),
+        #       max(range(len(group_4_counter)), key=group_4_counter.__getitem__),)
+        # self.success_rates.append( (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4)
+        # # return (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4
+
+    # def record_success_rates_multi(self, labels):
+    #     num_items = len(labels)
+    #     group_averages = []
+
+    #     group_1_counter = [0,0]
+    #     num_group_1 = 0
+    #     group_2_counter = [0, 0]
+    #     num_group_2 = 0
+    #     group_3_counter = [0,0]
+    #     num_group_3 = 0
+    #     group_4_counter = [0,0]
+    #     num_group_4 = 0
+
+    #     for i in range(len(labels)):
+    #         if i < num_items / 4:
+    #             group_1_counter[labels[i]] += 1
+    #             num_group_1 += 1
+    #         elif i >= num_items/4 and i < num_items/2:
+    #             group_2_counter[labels[i]] += 1
+    #             num_group_2 += 1
+    #         elif i>= num_items/2  and i < 3*num_items/4:
+    #             group_3_counter[labels[i]] += 1
+    #             num_group_3 += 1
+    #         else:
+    #             group_4_counter[labels[i]] += 1
+    #             num_group_4 += 1
+
+    #     group_1_avg = max(group_1_counter)/num_group_1
+    #     group_2_avg = max(group_2_counter)/num_group_2
+    #     group_3_avg = max(group_3_counter)/num_group_3
+    #     group_4_avg = max(group_4_counter)/num_group_4
+
+    #     self.success_rates.append( (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4)
+    #     # return (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4
 
     def record_success_rates(self, labels):
         # print(labels)
