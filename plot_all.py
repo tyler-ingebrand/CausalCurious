@@ -4,16 +4,16 @@ import numpy.random
 import pickle
 
 results_dir = "results"
-alg = "td3"
-change_shape = False
+alg = "td3_multi"
+change_shape = True
 change_size = False
 change_mass = True
 seeds = [0,1,2,3,4]
 total_timesteps = 300000
 random = 0.005
 pickle_name = "data.pkl"
-
-for seed in seeds:
+colors = ['r', 'b', 'g', 'orange', 'magenta']
+for c, seed in zip(colors, seeds):
       # find file location
       dir = f"{results_dir}/{alg}" \
             f"_{'change_shape_' if change_shape else ''}" \
@@ -36,6 +36,10 @@ for seed in seeds:
       # plt.plot(timesteps, success_rates, label="raw")
       success_rates = [np.mean(success_rates[max(i-averaging_step_size+1, 0):i+1]) for i in range(len(success_rates))]
       plt.plot(timesteps, success_rates, label=f"Seed {seed}")
+
+      # plt.plot(timesteps, mean_distance_other_cluster, label=f"Seed {seed}", color=c)
+      # plt.plot(timesteps, mean_distance_my_cluster, color=c)
+
 plt.xlabel("Env Interactions")
 plt.ylabel("Classification Success Rate (moving avg)")
 plt.legend(loc="lower right")

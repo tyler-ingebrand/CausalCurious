@@ -200,7 +200,10 @@ class CausalTD3(OffPolicyAlgorithm):
         group_2_avg = max(group_2_counter)/num_group_2
         group_3_avg = max(group_3_counter)/num_group_3
         group_4_avg = max(group_4_counter)/num_group_4
-
+        print(max(range(len(group_1_counter)), key=group_1_counter.__getitem__),
+              max(range(len(group_2_counter)), key=group_2_counter.__getitem__),
+              max(range(len(group_3_counter)), key=group_3_counter.__getitem__),
+              max(range(len(group_4_counter)), key=group_4_counter.__getitem__),)
         self.success_rates.append( (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4)
         # return (group_1_avg + group_2_avg + group_3_avg + group_4_avg)/ 4
 

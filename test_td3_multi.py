@@ -15,6 +15,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from moviepy.editor import *
 import os
 import pickle
+import argparse
 
 
 from gym import ObservationWrapper, ActionWrapper
@@ -76,7 +77,7 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
 
             elif change_mass and change_shape: 
                 task = MyOwnTask(shape = "Sphere" if rank < number_envs/2  else "Cube",
-                                size = "Small",  #if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
+                                size = "Big",  #if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Big",
                                 mass = "Light" if rank < number_envs/4 or rank >= number_envs/2 and rank < 3* number_envs/4  else "Heavy",
                                 randomness = initial_state_randomness)
             elif change_shape and change_size: 
@@ -172,15 +173,40 @@ def test(seed, number_envs, total_timesteps, change_shape,change_size,  change_m
         del images
         del video
 
+
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description='Test td3.')
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--number_envs', type=int, default=32)
+    parser.add_argument('--total_timesteps', type=int, default=300_000)
+    parser.add_argument('--change_size', type=str, default="False")
+    parser.add_argument('--change_shape', type=str, default="True")
+    parser.add_argument('--change_mass', type=str, default="False")
+    parser.add_argument('--random', type=float, default=0.005)
+
+    args = parser.parse_args()
+
     # parameters ##
-    seed = 1
-    number_envs = 32
+    seed = args.seed
+    number_envs = args.number_envs
     episodes_per_update = 1
-    total_timesteps =  300_000
-    change_shape = True
-    change_size = False
-    change_mass = True
-    random = 0.005
+    total_timesteps = args.total_timesteps
+    change_shape = True if args.change_shape == "True" else False if args.change_shape == "False" else Exception()
+    change_size = True if args.change_size == "True" else False if args.change_size == "False" else Exception()
+    change_mass = True if args.change_mass == "True" else False if args.change_mass == "False" else Exception()
+    random = args.random
     test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random, multi= True)
+
+    # if __name__ == '__main__':
+    #
+    #     # parameters ##
+    #     seed = 3
+    #     number_envs = 32
+    #     episodes_per_update = 1
+    #     total_timesteps =  300_000
+    #     change_shape = True
+    #     change_size = False
+    #     change_mass = True
+    #     random = 0.005
+    #     test(seed, number_envs, total_timesteps, change_shape, change_size,  change_mass, initial_state_randomness=random, multi= True)
